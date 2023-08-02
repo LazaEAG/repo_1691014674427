@@ -1,0 +1,153 @@
+{% comment %}
+  PARAMS:
+    cart_type => drawer or full_width STRING
+    product => shopify product OBJECT
+    id => uniq id
+{% endcomment %}
+
+{% assign current_variant = product.selected_or_first_available_variant %}
+{%- capture id -%}id-{{ section.id }}-{{ 'now' | date: '%N' }}{%- endcapture -%}
+
+{% case cart_type %}
+  {% when 'drawer' %}
+    <div
+      class="bg-sc-bg-secondary flex h-full items-stretch p-3.5 {{ class }}"
+    >
+      <a
+        href="{{ product.url }}"
+        class="relative mr-2 block h-[70px] w-[70px] shrink-0 overflow-hidden md:h-[75px] md:w-[75px]"
+      >
+        {{
+          product.featured_media
+          | image_url: width: 200
+          | image_tag: loading: 'lazy', alt: icon.alt, class: 'block w-full h-full object-contain'
+        }}
+      </a>
+      <div class="flex w-full flex-col">
+        <a
+          href="{{ product.url }}"
+          class="text-sc-title font-primary mb-1 block text-sm font-medium"
+        >
+          <span>{{ product.title }}</span>
+        </a>
+
+        <div x-data="{variantId: null}" class="!mt-auto flex w-full items-center justify-between">
+          <span class="text-sc-body-primary flex flex-wrap items-center justify-start gap-1">
+            {% if current_variant.compare_at_price > current_variant.price %}
+              <s class="text-xs">{{ current_variant.compare_at_price | money }}</s>
+            {% endif %}
+            <span class="text-sm">{{ current_variant.price | money }}</span>
+          </span>
+          {% if product.has_only_default_variant %}
+            <button
+              type="button"
+              aria-label="Open quick order popup"
+              @click="
+                $store.cart.addToCart(
+                [
+                  {
+                    id: {{ product.variants[0].id }},
+                    quantity: 1,
+                    selling_plan: null,
+                  },
+                ]);
+              "
+              class="btn btn--pill btn--primary btn--primary__pill btn--primary__pill--fill btn--sm hidden min-w-0 md:flex"
+            >
+              <span>Add +</span>
+            </button>
+            <button
+              type="button"
+              class="btn btn--circle btn--primary btn--primary__circle btn--primary__circle--fill md:hidden"
+              aria-label="Open quick order popup"
+              @click="
+                $store.cart.addToCart(
+                [
+                  {
+                    id: {{ product.variants[0].id }},
+                    quantity: 1,
+                    selling_plan: null,
+                  },
+                ]);
+              "
+            >
+              <span>
+                {% render 'icon', name: 'plus' %}
+              </span>
+            </button>
+          {% else %}
+            <button
+              type="button"
+              aria-label="Open quick order popup"
+              @click="$store.quickOrder.show({ id: '{{ id }}' })"
+              class="btn btn--pill btn--primary btn--primary__pill btn--primary__pill--fill btn--sm hidden min-w-0 md:flex"
+            >
+              <span>Add +</span>
+            </button>
+            <button
+              type="button"
+              class="btn btn--circle btn--primary btn--primary__circle btn--primary__circle--fill md:hidden"
+              aria-label="Open quick order popup"
+              @click="$store.quickOrder.show({ id: '{{ id }}' })"
+            >
+              <span>
+                {% render 'icon', name: 'plus' %}
+              </span>
+            </button>
+          {% endif %}
+          {% render 'quick-order', product: product, id: id %}
+        </div>
+      </div>
+    </div>
+  {% when 'full_width' %}
+    <div
+      class="bg-sc-bg-secondary flex h-full items-stretch p-3.5 {{ class }}"
+    >
+      <a
+        href="{{ product.url }}"
+        class="relative mr-2 block h-[70px] w-[70px] shrink-0 overflow-hidden md:h-[75px] md:w-[75px]"
+      >
+        {{
+          product.featured_media
+          | image_url: width: 200
+          | image_tag: loading: 'lazy', alt: icon.alt, class: 'block w-full h-full object-contain'
+        }}
+      </a>
+      <div class="flex w-full flex-col">
+        <a
+          href="{{ product.url }}"
+          class="text-sc-title font-primary mb-1 block text-sm font-medium"
+        >
+          <span>{{ product.title }}</span>
+        </a>
+
+        <div x-data="{variantId: null}" class="!mt-auto flex w-full items-center justify-between">
+          <span class="text-sc-body-primary flex flex-wrap items-center justify-start gap-1">
+            {% if current_variant.compare_at_price > current_variant.price %}
+              <s class="text-xs">{{ current_variant.compare_at_price | money }}</s>
+            {% endif %}
+            <span class="text-sm">{{ current_variant.price | money }}</span>
+          </span>
+          <button
+            type="button"
+            aria-label="Open quick order popup"
+            @click="$store.quickOrder.show({ id: '{{ id }}', initiator: 'section' })"
+            class="btn btn--pill btn--primary btn--primary__pill btn--primary__pill--fill btn--sm hidden min-w-0 md:flex"
+          >
+            <span>Add +</span>
+          </button>
+          <button
+            type="button"
+            class="btn btn--circle btn--primary btn--primary__circle btn--primary__circle--fill md:hidden"
+            aria-label="Open quick order popup"
+            @click="$store.quickOrder.show({ id: '{{ id }}', initiator: 'section' })"
+          >
+            <span>
+              {% render 'icon', name: 'plus' %}
+            </span>
+          </button>
+          {% render 'quick-order', product: product, id: id %}
+        </div>
+      </div>
+    </div>
+{% endcase %}
