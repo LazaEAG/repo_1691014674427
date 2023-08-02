@@ -1,0 +1,355 @@
+{% liquid
+  assign section_anchor_id = section.settings.section_anchor_id | handleize
+  assign color_scheme = section.settings.color_scheme
+
+  assign title = section.settings.title
+  assign layout = section.settings.layout
+  assign video = section.settings.video
+  assign img = section.settings.img
+
+  assign button_url = section.settings.button_url
+  assign button_text = section.settings.button_text
+  assign button_type = section.settings.button_type
+  assign button_secondary_url = section.settings.button_secondary_url
+  assign button_secondary_text = section.settings.button_secondary_text
+  assign button_secondary_type = section.settings.button_secondary_type
+
+  assign pt_mob = section.settings.pt_mob
+  assign pb_mob = section.settings.pb_mob
+  assign pt_tab = section.settings.pt_tab
+  assign pb_tab = section.settings.pb_tab
+  assign pt_desk = section.settings.pt_desk
+  assign pb_desk = section.settings.pb_desk
+%}
+
+{% render 'section-paddings',
+  section_id: section.id,
+  pt_mob: pt_mob,
+  pb_mob: pb_mob,
+  pt_tab: pt_tab,
+  pb_tab: pb_tab,
+  pt_desk: pt_desk,
+  pb_desk: pb_desk
+%}
+
+<div
+  id="{{ section_anchor_id }}"
+  data-section-id="{{ section.id }}"
+  class="color-scheme-{{ color_scheme }} bg-sc-bg-primary bg-primary-gradient"
+>
+  <div class="{% if layout == 'container' %}container{% endif %}">
+    <div class="relative h-[500px] md:h-[800px]" x-data="videoToggler()">
+      {% if title != blank or button_text != blank or button_secondary_text != blank %}
+        <div
+          class="animate__animated blur-black py-7.5 smD:px-10 smD:pb-15 absolute bottom-0 left-0 z-[2] w-full justify-center opacity-0 md:py-10 2xl:px-0"
+          x-intersect="$el.classList.add('animate__fadeIn')"
+        >
+          <div class="md:space-y-7.5 smD:flex smD:space-y-0 smD:items-center container space-y-3">
+            {% if title != blank %}
+              <h2 class="text-sc-title font-primary smD:mr-9 2xl:mr-22 2k:text-6xl max-w-3xl text-2xl font-medium md:text-4xl 2xl:text-5xl">
+                {{ title }}
+              </h2>
+            {% endif %}
+
+            {% if button_text != blank or button_secondary_text != blank %}
+              <div class="smD:px-4 2k:ml-auto md:mr-30 2k:mr-22 flex shrink-0 items-center space-x-3 md:space-x-8">
+                {% if button_text != blank %}
+                  <a
+                    href="{{ button_url }}"
+                    class="{% render 'btn-class', btn: button_type %}"
+                    aria-label="{{ button_text }}"
+                  >
+                    <span>
+                      {{- button_text -}}
+                    </span>
+                  </a>
+                {% endif %}
+
+                {% if button_secondary_text != blank %}
+                  <a
+                    href="{{ button_secondary_url }}"
+                    class="{% render 'btn-class', btn: button_secondary_type %}"
+                    aria-label="{{ button_secondary_text }}"
+                  >
+                    <span>{{- button_secondary_text -}}</span>
+                  </a>
+                {% endif %}
+              </div>
+            {% endif %}
+
+            <button
+              type="button"
+              @click="togglePlay()"
+              aria-label="play/pause video"
+              class="text-sc-title smD:block ml-auto hidden h-full shrink-0"
+            >
+              <span x-show="!play" x-cloak>{% render 'icon', name: 'play-btn', class: 'w-11 h-11' %}</span>
+              <span x-show="play" x-cloak>{% render 'icon', name: 'pause-btn', class: 'w-11 h-11' %}</span>
+            </button>
+          </div>
+        </div>
+      {% else %}
+        <div class="py-7.5 smD:py-10 container absolute inset-0 flex h-full items-end justify-end">
+          <button
+            type="button"
+            @click="togglePlay()"
+            aria-label="play/pause video"
+            class="text-sc-title z-[2] duration-300"
+          >
+            <span x-show="!play" x-cloak>{% render 'icon', name: 'play-btn', class: 'w-7.5 h-7.5' %}</span>
+            <span x-show="play" x-cloak>{% render 'icon', name: 'pause-btn', class: 'w-7.5 h-7.5' %}</span>
+          </button>
+        </div>
+      {% endif %}
+
+      {% assign img_poster = none %}
+      {% if img != blank %}
+        {% assign img_poster = img | image_url: width: 2000 %}
+      {% endif %}
+      <div
+        class="h-full w-full cursor-pointer"
+        @click="togglePlay()"
+      >
+        {{
+          video
+          | video_tag:
+            loop: false,
+            muted: false,
+            controls: false,
+            class: 'h-full w-full object-cover',
+            x-ref: 'video',
+            playsinline: true,
+            poster: img_poster
+        }}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Video",
+  "tag": "section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "section_anchor_id",
+      "label": "Section anchor id",
+      "default": "Video"
+    },
+    {
+      "type": "header",
+      "content": "Content settings"
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "Color scheme"
+    },
+    {
+      "type": "select",
+      "id": "layout",
+      "label": "Layout type",
+      "options": [
+        {
+          "value": "wide",
+          "label": "Wide"
+        },
+        {
+          "value": "container",
+          "label": "Container"
+        }
+      ],
+      "default": "wide"
+    },
+    {
+      "type": "video",
+      "id": "video",
+      "label": "Video"
+    },
+    {
+      "type": "image_picker",
+      "id": "img",
+      "label": "Video poster"
+    },
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Section title",
+      "default": "Lorem ipsum, or lipsum as it is sometimes known"
+    },
+    {
+      "type": "header",
+      "content": "First button settings"
+    },
+    {
+      "type": "url",
+      "id": "button_url",
+      "label": "Section button url"
+    },
+    {
+      "type": "text",
+      "id": "button_text",
+      "label": "Section button text",
+      "default": "Button text"
+    },
+    {
+      "type": "select",
+      "id": "button_type",
+      "label": "Section button type",
+      "options": [
+        {
+          "value": "btn_primary_main_fill",
+          "label": "main primary fill"
+        },
+        {
+          "value": "btn_secondary_main_fill",
+          "label": "main secondary fill"
+        },
+        {
+          "value": "btn_primary_main_outline",
+          "label": "main primary outline"
+        },
+        {
+          "value": "btn_secondary_main_outline",
+          "label": "main secondary outline"
+        },
+        {
+          "value": "btn_primary_pill_fill",
+          "label": "pill primary fill"
+        },
+        {
+          "value": "btn_secondary_pill_fill",
+          "label": "pill secondary fill"
+        },
+        {
+          "value": "btn_primary_pill_outline",
+          "label": "pill primary outline"
+        },
+        {
+          "value": "btn_secondary_pill_outline",
+          "label": "pill secondary outline"
+        },
+        {
+          "value": "link_primary",
+          "label": "Link primary"
+        },
+        {
+          "value": "link_secondary",
+          "label": "Link secondary"
+        }
+      ],
+      "default": "btn_primary_pill_fill"
+    },
+    {
+      "type": "header",
+      "content": "Second button settings"
+    },
+    {
+      "type": "url",
+      "id": "button_secondary_url",
+      "label": "Section secondary button url"
+    },
+    {
+      "type": "text",
+      "id": "button_secondary_text",
+      "label": "Section secondary button text",
+      "default": "Button text"
+    },
+    {
+      "type": "select",
+      "id": "button_secondary_type",
+      "label": "Section secondary button type",
+      "options": [
+        {
+          "value": "btn_primary_main_fill",
+          "label": "main primary fill"
+        },
+        {
+          "value": "btn_secondary_main_fill",
+          "label": "main secondary fill"
+        },
+        {
+          "value": "btn_primary_main_outline",
+          "label": "main primary outline"
+        },
+        {
+          "value": "btn_secondary_main_outline",
+          "label": "main secondary outline"
+        },
+        {
+          "value": "btn_primary_pill_fill",
+          "label": "pill primary fill"
+        },
+        {
+          "value": "btn_secondary_pill_fill",
+          "label": "pill secondary fill"
+        },
+        {
+          "value": "btn_primary_pill_outline",
+          "label": "pill primary outline"
+        },
+        {
+          "value": "btn_secondary_pill_outline",
+          "label": "pill secondary outline"
+        },
+        {
+          "value": "link_primary",
+          "label": "Link primary"
+        },
+        {
+          "value": "link_secondary",
+          "label": "Link secondary"
+        }
+      ],
+      "default": "btn_primary_pill_fill"
+    },
+    {
+      "type": "header",
+      "content": "Padding Y settings"
+    },
+    {
+      "type": "number",
+      "id": "pt_mob",
+      "label": "Mobile padding top in px",
+      "default": 0
+    },
+    {
+      "type": "number",
+      "id": "pb_mob",
+      "label": "Mobile padding bottom in px",
+      "default": 0
+    },
+    {
+      "type": "number",
+      "id": "pt_tab",
+      "label": "Tablet padding top in px",
+      "default": 0
+    },
+    {
+      "type": "number",
+      "id": "pb_tab",
+      "label": "Tablet padding bottom in px",
+      "default": 0
+    },
+    {
+      "type": "number",
+      "id": "pt_desk",
+      "label": "Desktop padding top in px",
+      "default": 0
+    },
+    {
+      "type": "number",
+      "id": "pb_desk",
+      "label": "Desktop padding bottom in px",
+      "default": 0
+    }
+  ],
+  "presets": [
+    {
+      "name": "Video",
+      "category": "Repeatable"
+    }
+  ]
+}
+{% endschema %}
