@@ -1,0 +1,59 @@
+{%- comment -%}
+  VIDEO CARD COMPONENT
+
+  * video: the video to render
+  * img_poster
+  * class
+  * index
+  * init_animation
+{%- endcomment -%}
+
+{% liquid
+  assign index = index | default: 1
+  assign animation_delay = index | times: 100
+  assign init_animation = init_animation | default: true
+
+  if layout == 'grid'
+    assign button_pos = 'bottom-3.5 right-3.5 md:bottom-7.5 md:right-7.5'
+  elsif layout == 'slider'
+    assign button_pos = 'bottom-7.5 right-7.5'
+  endif
+%}
+
+<article
+  class="animate__animated relative opacity-0 {{ class }}"
+  x-data="videoToggler()"
+  {%- if init_animation -%}
+    x-init="setTimeout(() => { $el.classList.add('animate__fadeIn') }, {{ animation_delay }})"
+  {%- else -%}
+    x-intersect="setTimeout(() => { $el.classList.add('animate__fadeIn') }, {{ animation_delay }})"
+  {%- endif -%}
+>
+  <button
+    type="button"
+    @click="togglePlay()"
+    aria-label="play/pause video"
+    class="text-sc-bg-primary absolute z-[2] duration-300 {{ button_pos }}"
+  >
+    <span x-show="!play" x-cloak>{% render 'icon', name: 'play-btn', class: 'w-7.5 h-7.5' %}</span>
+    <span x-show="play" x-cloak>{% render 'icon', name: 'pause-btn', class: 'w-7.5 h-7.5' %}</span>
+  </button>
+
+  {% assign img_poster = none %}
+  {% if img != blank %}
+    {% assign img_poster = img | image_url: width: 520 %}
+  {% endif %}
+  <div class="h-full w-full cursor-pointer" @click="togglePlay()">
+    {{
+      video
+      | video_tag:
+        loop: false,
+        muted: false,
+        controls: false,
+        class: 'h-full w-full object-cover',
+        x-ref: 'video',
+        playsinline: true,
+        poster: img_poster
+    }}
+  </div>
+</article>
