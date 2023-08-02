@@ -1,0 +1,207 @@
+{% liquid
+  assign cart_type = section.settings.cart_type
+  assign cart_upsells = section.settings.cart_upsells
+  assign cart_progress_bar_threshold = section.settings.cart_progress_bar_threshold | times: 100
+%}
+
+<script>
+  document.addEventListener('alpine:init', () => {
+    Alpine.store('cart').obj.item_count = {{ cart.item_count | json }};
+    Alpine.store('cart').upsells = {{ cart_upsells | json }};
+    Alpine.store('cart').cart_progress_bar_threshold = {{ cart_progress_bar_threshold }};
+  });
+</script>
+
+{% render 'global-sections-css-variables-setter' %}
+
+<template x-teleport="#cart-overlay">
+  <div data-section-id="{{ section.id }}">
+    {% case cart_type %}
+      {% when 'drawer' %}
+        {% render 'layout-cart-drawer' %}
+      {% when 'full_width' %}
+        {% render 'layout-cart-full-width' %}
+    {% endcase %}
+  </div>
+</template>
+{% schema %}
+{
+  "name": "Cart",
+  "tag": "section",
+  "settings": [
+    {
+      "type": "color",
+      "id": "sc-title",
+      "label": "Title",
+      "default": "#151515"
+    },
+    {
+      "type": "color",
+      "id": "sc-subtitle",
+      "label": "Subtitle",
+      "default": "#054A49"
+    },
+    {
+      "type": "color",
+      "id": "sc-body-primary",
+      "label": "Body primary",
+      "default": "#52525B"
+    },
+    {
+      "type": "color",
+      "id": "sc-bg-primary",
+      "label": "Primary background",
+      "default": "#FFFFFF"
+    },
+    {
+      "type": "color",
+      "id": "sc-bg-secondary",
+      "label": "Secondary background",
+      "default": "#FFFFFF"
+    },
+    {
+      "type": "color",
+      "id": "sc-btn-primary-bg-default",
+      "label": "Primary btn bg default",
+      "default": "#054A49"
+    },
+    {
+      "type": "color",
+      "id": "sc-btn-primary-text-default",
+      "label": "Primary btn text default",
+      "default": "#FFFFFF"
+    },
+    {
+      "type": "color",
+      "id": "sc-btn-primary-bg-hover",
+      "label": "Primary btn bg hover",
+      "default": "#002F2E"
+    },
+    {
+      "type": "color",
+      "id": "sc-btn-primary-text-hover",
+      "label": "Primary btn text hover",
+      "default": "#FFFFFF"
+    },
+    {
+      "type": "select",
+      "id": "cart_type",
+      "label": "Cart layout",
+      "options": [
+        {
+          "value": "drawer",
+          "label": "Drawer"
+        },
+        {
+          "value": "full_width",
+          "label": "Full width"
+        }
+      ],
+      "default": "drawer"
+    },
+    {
+      "type": "text",
+      "id": "cart_title",
+      "label": "Cart drawer title",
+      "default": "Shopping Cart"
+    },
+    {
+      "type": "text",
+      "id": "empty_cart_title",
+      "label": "Empty cart drawer title",
+      "default": "Your cart is empty"
+    },
+    {
+      "type": "header",
+      "content": "Card drawer progress bar settings"
+    },
+    {
+      "type": "checkbox",
+      "id": "cart_progress_bar_enabled",
+      "label": "Progress bar enabled ?",
+      "default": true
+    },
+    {
+      "type": "number",
+      "id": "cart_progress_bar_threshold",
+      "label": "Progress bar threshold",
+      "default": 100
+    },
+    {
+      "type": "textarea",
+      "id": "cart_progress_message",
+      "label": "Progress bar message",
+      "default": "Spend [amount_left] more and get free shipping!",
+      "info": "[amount_left] don't remove, will be replaced to value"
+    },
+    {
+      "type": "text",
+      "id": "cart_progress_reached_message",
+      "label": "Progress bar reached message",
+      "default": "You are eligible for free shipping."
+    },
+    {
+      "type": "header",
+      "content": "Card drawer upsells settings"
+    },
+    {
+      "type": "checkbox",
+      "id": "cart_upsells_enabled",
+      "label": "Upsells enabled ?",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "cart_upsells_title",
+      "label": "Upsells title",
+      "default": "Trending this month"
+    },
+    {
+      "type": "product_list",
+      "id": "cart_upsells",
+      "label": "Upsell products",
+      "limit": 4
+    },
+    {
+      "type": "header",
+      "content": "Card drawer footer settings"
+    },
+    {
+      "type": "text",
+      "id": "cart_footer_title",
+      "label": "Card drawer footer title",
+      "default": "Total"
+    },
+    {
+      "type": "richtext",
+      "id": "cart_footer_privacy_rte",
+      "label": "Card drawer privacy"
+    },
+    {
+      "type": "text",
+      "id": "cart_checkout_btn_text",
+      "label": "Checkout button text",
+      "default": "Checkout"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "empty_cart_btn",
+      "name": "Empty cart button",
+      "settings": [
+        {
+          "type": "text",
+          "id": "text",
+          "label": "Text",
+          "default": "Button text"
+        },
+        {
+          "type": "url",
+          "id": "url",
+          "label": "Button link"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}
