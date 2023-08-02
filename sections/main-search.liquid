@@ -1,0 +1,371 @@
+{% liquid
+  assign section_anchor_id = section.settings.section_anchor_id | handleize
+  assign color_scheme = section.settings.color_scheme
+
+  assign content_align = section.settings.content_align
+  assign show_bg = section.settings.show_bg
+  assign show_atc = section.settings.show_atc
+
+  assign pt_mob = section.settings.pt_mob
+  assign pb_mob = section.settings.pb_mob
+  assign pt_tab = section.settings.pt_tab
+  assign pb_tab = section.settings.pb_tab
+  assign pt_desk = section.settings.pt_desk
+  assign pb_desk = section.settings.pb_desk
+%}
+
+{% render 'section-paddings',
+  section_id: section.id,
+  pt_mob: pt_mob,
+  pb_mob: pb_mob,
+  pt_tab: pt_tab,
+  pb_tab: pb_tab,
+  pt_desk: pt_desk,
+  pb_desk: pb_desk
+%}
+
+{%- assign selected_sort_by_value = search.sort_by | default: search.default_sort_by -%}
+{%- assign selected_sort_by = search.sort_options | where: 'value', selected_sort_by_value | first -%}
+
+<div
+  id="{{ section_anchor_id }}"
+  data-section-id="{{ section.id }}"
+  class="color-scheme-{{ color_scheme }} bg-sc-bg-primary bg-primary-gradient"
+  x-data="searchPage()"
+>
+  <div class="container">
+    <h1 class="font-primary text-sc-title smD:text-5xl 2k:text-6xl text-center text-3xl font-medium md:text-4xl">
+      {% if search.terms != blank %}
+        <span>
+          {% case search.results.size %}
+            {% when 0 %}
+              <span>
+                {{- 'general.search.results_count.zero' | t: count: search.results.size, search_terms: search.terms -}}
+              </span>
+            {% when 1 %}
+              <span>
+                {{- 'general.search.results_count.one' | t: count: search.results.size, search_terms: search.terms -}}
+              </span>
+            {% else %}
+              <span>
+                {{- 'general.search.results_count.other' | t: count: search.results.size, search_terms: search.terms -}}
+              </span>
+          {% endcase %}
+        </span>
+      {% else %}
+        <span>
+          {{ 'general.search.no_results' | t }}
+        </span>
+      {% endif %}
+    </h1>
+
+    <form
+      action="{{ routes.search_url }}"
+      method="get"
+      role="search"
+      class="mt-15 relative mx-auto flex max-w-[470px] items-center pb-2"
+      @submit.prevent
+    >
+      <label
+        for="search-input"
+        class="relative -mr-7 h-7 w-7 duration-300 ease-in-out"
+        :class="searchQuery.length ? 'text-sc-title' : 'text-sc-title/70'"
+      >
+        {% render 'icon', name: 'search' %}
+      </label>
+      <input
+        type="text"
+        id="search-input"
+        class="text-sc-title placeholder:text-sc-title/70 w-full border-none bg-transparent pl-10 text-base outline-none"
+        placeholder="Searching for..."
+        x-model="searchQuery"
+        name="q"
+        autocomplete="off"
+        x-init="searchQuery = '{{ search.terms }}'"
+        @input.debounce.1000ms="renderSearch()"
+      >
+      <button
+        class="text-sc-body-primary ml-2 flex shrink-0 items-center duration-300 ease-in-out hover:opacity-70"
+        x-show="searchQuery.length"
+        x-cloak
+        x-transition.opacity.delay.300ms
+        type="button"
+        @click.prevent="searchQuery = '';"
+      >
+        <span class="sr-only">Clear search query</span>
+        <span class="text-sc-title mr-1 whitespace-nowrap">
+          {{- 'general.search.clear' | t -}}
+        </span>
+
+        {% render 'icon', name: 'close', size: 'md', class: 'text-sc-title/60' %}
+      </button>
+    </form>
+
+    <hr class="border-sc-subtitle mb-12.5 mx-auto max-w-[470px] border-b-[2px] md:mb-20">
+
+    <!-- FILTERS -->
+    <div
+      class="space-y-3"
+      x-intersect:leave="floatFilters = true"
+      x-intersect:enter="floatFilters = false"
+    >
+      <div class="flex items-center justify-between space-x-4">
+        <button
+          type="button"
+          class="text-sc-title btn-link-anim group mb-2 flex cursor-pointer items-center space-x-2"
+          @click="$store.collectionFiltersStore.show()"
+        >
+          {% render 'icon', name: 'filter-ranges', class: 'w-5 text-sc-title fill-sc-bg-primary' %}
+          <span class="text-sc-title text-base">{{ 'collection.facets.filters' | t }}</span>
+        </button>
+
+        <div class="relative hidden w-max lg:block" x-data="{ isOpen: false }">
+          <span class="flex space-x-2">
+            <span class="text-sc-title text-base">{{ 'collection.sorting.title' | t }}:</span>
+            <button
+              type="button"
+              class="flex items-center space-x-2"
+              aria-controls="filter-dialog-sort-by"
+              aria-expanded="false"
+              @click="isOpen = !isOpen"
+            >
+              <span class="text-sc-title group flex shrink-0 items-center space-x-2 text-base">
+                <span>
+                  {{- selected_sort_by.name -}}
+                </span>
+                <span
+                  class="bg-sc-bg-secondary group-hover:bg-sc-title flex h-6 w-6 items-center justify-center rounded-full duration-300 ease-in-out"
+                  :class="{ 'rotate-180' : isOpen }"
+                >
+                  {% render 'icon',
+                    name: 'chevron-mini',
+                    class: 'text-sc-title duration-300 ease-in-out group-hover:text-sc-bg-secondary'
+                  %}
+                </span>
+              </span>
+            </button>
+          </span>
+          <facet-dialog
+            id="filter-dialog-sort-by"
+            x-show="isOpen"
+            class="bg-sc-bg-primary border-sc-title/20 absolute right-0 z-10 mt-2 flex w-max border"
+            x-cloak
+            x-transition
+            @click.away="isOpen = false"
+          >
+            <ul role="list">
+              {%- for option in search.sort_options -%}
+                <li class="m-0">
+                  <label
+                    class="btn-link-anim group block cursor-pointer py-2 px-4"
+                    for="Filter-{{ option.name | escape }}-sort"
+                  >
+                    <input
+                      type="radio"
+                      name="sort_by"
+                      value="{{ option.value | escape }}"
+                      id="Filter-{{ option.name | escape }}-sort"
+                      {% if option.value == selected_sort_by_value %}
+                        checked
+                      {% endif %}
+                      class="peer hidden"
+                      @change="isOpen = false; setSortBy('{{ option.value | escape }}');"
+                    >
+
+                    <span
+                      aria-hidden="true"
+                      class="text-sc-title text-sm opacity-70 !duration-500 ease-in-out group-hover:opacity-100 peer-checked:opacity-100"
+                    >
+                      {{- option.name | escape -}}
+                    </span>
+                  </label>
+                </li>
+              {%- endfor -%}
+            </ul>
+          </facet-dialog>
+        </div>
+      </div>
+      {% render 'active-filters', collection: search, active_values_count: active_values_count %}
+    </div>
+
+    {% paginate search.results by 20 %}
+      <div
+        class="pt-5 duration-500 ease-in-out"
+        :class="isLoading ? 'opacity-50' : 'opacity-100'"
+      >
+        {% if search.performed and search.results.size > 0 %}
+          <div
+            id="coll-grid"
+            class="md:gap-7.5 smD:grid-cols-3 grid w-full grid-cols-2 gap-x-2.5 gap-y-5 2xl:grid-cols-4"
+          >
+            {% for product in search.results %}
+              {% if product.object_type == 'product' %}
+                {%- unless product.template_suffix == 'hidden' -%}
+                  {% render 'product-card',
+                    product: product,
+                    content_align: content_align,
+                    show_bg: show_bg,
+                    show_atc: show_atc,
+                    index: forloop.index
+                  %}
+                {%- endunless -%}
+              {% endif %}
+            {% endfor %}
+          </div>
+
+          <!-- FLOAT FILTERS -->
+          <button
+            type="button"
+            class="{% render 'btn-class', btn: 'btn_primary_pill_fill' %} no-select mt-7.5 group sticky bottom-10 left-1/2 w-max -translate-x-1/2 duration-300 ease-in-out md:bottom-10"
+            :class="floatFilters ? 'opacity-100' : 'opacity-0'"
+            @click="$store.collectionFiltersStore.show()"
+          >
+            {% render 'icon', name: 'filter-ranges', class: 'w-5' %}
+            <span>{{ 'collection.facets.filters' | t }}</span>
+          </button>
+        {% else %}
+          <div
+            class="animate__animated text-sc-title py-7.5 md:py-15 flex h-full flex-col items-center justify-center space-y-3 opacity-0"
+            x-init="$el.classList.add('animate__fadeIn')"
+          >
+            {% render 'icon', name: 'serach-not-found', class: 'w-20 h-20' %}
+            <h4 class="text-sc-title font-primary text-center text-xl font-medium">
+              {{ 'general.search.no_results' | t }}
+            </h4>
+            <template x-if="facets_params.includes('filter')">
+              <button
+                class="no-select-all text-sc-title btn-link-anim-reverse !mt-6 text-base"
+                type="button"
+                @click.prevent="clearFilter('{{ collection.url }}')"
+              >
+                <span class="sr-only">Clear all filters</span>
+                <span>
+                  {{ 'collection.facets.clear_all' | t }}
+                </span>
+              </button>
+            </template>
+
+            <template x-if="!facets_params.includes('filter')">
+              <a
+                href="{{ routes.all_products_collection_url }}"
+                aria-label="{{- 'cart.general.continue_shopping_link_html' | t -}}"
+                class="{% render 'btn-class', btn: 'btn_primary_pill_fill' %} !mt-6"
+              >
+                <span>
+                  {{- 'cart.general.continue_shopping_link_html' | t -}}
+                </span>
+              </a>
+            </template>
+          </div>
+        {% endif %}
+
+        <!-- LOAD MORE -->
+        {% paginate search.results by 20 %}
+          {% if paginate.next %}
+            <div
+              x-cloak
+              x-show="hasNextPage && !isLoading"
+              data-next-page
+              class="h-2 bg-transparent"
+              x-intersect:enter.margin.25%="loadMoreProducts"
+            ></div>
+          {% endif %}
+        {% endpaginate %}
+      </div>
+    {% endpaginate %}
+
+    {% render 'facets', collection: search %}
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Main search",
+  "tag": "section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "section_anchor_id",
+      "label": "Section anchor id",
+      "default": "Main search"
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "Color scheme"
+    },
+    {
+      "type": "header",
+      "content": "Card settings"
+    },
+    {
+      "type": "select",
+      "id": "content_align",
+      "label": "Card content align",
+      "options": [
+        {
+          "value": "left",
+          "label": "Left"
+        },
+        {
+          "value": "center",
+          "label": "Center"
+        }
+      ],
+      "default": "left"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_bg",
+      "label": "Show background",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_atc",
+      "label": "Show quick order",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "Padding Y settings"
+    },
+    {
+      "type": "number",
+      "id": "pt_mob",
+      "label": "Mobile padding top in px",
+      "default": 66
+    },
+    {
+      "type": "number",
+      "id": "pb_mob",
+      "label": "Mobile padding bottom in px",
+      "default": 130
+    },
+    {
+      "type": "number",
+      "id": "pt_tab",
+      "label": "Tablet padding top in px",
+      "default": 90
+    },
+    {
+      "type": "number",
+      "id": "pb_tab",
+      "label": "Tablet padding bottom in px",
+      "default": 150
+    },
+    {
+      "type": "number",
+      "id": "pt_desk",
+      "label": "Desktop padding top in px",
+      "default": 50
+    },
+    {
+      "type": "number",
+      "id": "pb_desk",
+      "label": "Desktop padding bottom in px",
+      "default": 200
+    }
+  ]
+}
+{% endschema %}
