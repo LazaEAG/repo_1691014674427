@@ -1,0 +1,623 @@
+<!-- main-product-grid.liquid -->
+{% liquid
+  assign subs_label = section.settings.subs_label
+  assign subs_most_popular_frequency = section.settings.subs_most_popular_frequency
+
+  assign enabled_images_switching_by_color = product.metafields.custom.enabled_images_switching_by_color | default: false
+
+  assign product_info = product.metafields.custom.product_info
+  assign icons_with_text = product_info.value.icons_with_text.value
+  assign description = product_info.value.description | metafield_tag
+  assign how_to_use = product_info.value.how_to_use | metafield_tag
+  assign ingredients = product_info.value.ingredients | metafield_tag
+  assign faq = product_info.value.faq.value
+
+  assign featured_icons = section.blocks | where: 'type', 'featured_icons'
+%}
+
+{% capture faq_content %}
+  <div class="flex flex-col space-y-2.5">
+    {% for i in faq %}
+      <div>
+        <span class="block text-sc-title mb-1">
+          {{ i.title | metafield_tag }}
+        </span>
+        <span class="block">
+        {{ i.text | metafield_tag }}
+        </span>
+      </div>
+    {% endfor %}
+  </div>
+{% endcapture %}
+
+<div
+  x-data="
+    pdpGrid({
+      enabledImagesSwitchingByColor: {{ enabled_images_switching_by_color }},
+    })
+  "
+  class="flex flex-col lg:container lg:flex-row lg:justify-center lg:pt-10"
+>
+  <!-- PRODUCT MEDIA -->
+  <div class="lg:mr-7.5 xl:mr-15 lg:w-full lg:max-w-[560px]">
+    <!-- MOBILE VIEW -->
+    <div class="lg:hidden">
+      <!-- main slider -->
+      <div class="swiper w-full" x-ref="main-slider-js">
+        <div class="swiper-wrapper">
+          <template x-for="image in images">
+            <div class="swiper-slide">
+              <div class="h-full w-full">
+                <template x-if="image.media_type === 'image'">
+                  <img
+                    :src="image.src"
+                    :alt="image.alt"
+                    class="block h-full w-full object-cover object-center"
+                  >
+                </template>
+                <template x-if="image.media_type === 'video'">
+                  <div></div>
+                </template>
+              </div>
+            </div>
+          </template>
+        </div>
+        <button
+          x-show="images && images.length > 1"
+          type="button"
+          aria-label="Slide previous"
+          class="swiper-button-prev text-sc-subtitle smD:h-[110px] smD:w-[110px] left-0 top-1/2 !m-0 hidden h-[80px] w-[80px] -translate-y-1/2 after:hidden md:block"
+        >
+          {% render 'icon', name: 'slider-arrow', class: 'w-full h-full' %}
+        </button>
+        <button
+          x-show="images && images.length > 1"
+          type="button"
+          aria-label="Slide next"
+          class="swiper-button-next text-sc-subtitle smD:h-[110px] smD:w-[110px] right-0 top-1/2 !m-0 hidden h-[80px] w-[80px] -translate-y-1/2 after:hidden md:block"
+        >
+          {% render 'icon', name: 'slider-arrow', class: 'w-full h-full rotate-180' %}
+        </button>
+      </div>
+      <!-- thumbs -->
+      <div class="flex items-center justify-center space-x-2" x-show="images.length > 1">
+        <button
+          x-show="images.length > slidesPerView"
+          @click="thumbsSlider.slidePrev()"
+          :class="isBeginning ? 'text-sc-btn-primary-bg-default/50' : 'text-sc-btn-primary-bg-default'"
+        >
+          {% render 'icon', name: 'slider-arrow', class: 'w-7.5 h-7.5' %}
+        </button>
+        <div
+          :style="{maxWidth: `${thumbsSliderMaxWidth}px`}"
+          class="swiper relative m-0 my-3 max-w-max md:mt-5 md:mb-10"
+          x-ref="thumb-slider-js"
+        >
+          <div class="swiper-wrapper">
+            <template x-for="image in images">
+              <div
+                class="swiper-slide sw-thumb-active:border-sc-subtitle max-w-[30px] max-w-[40px] border"
+              >
+                <div
+                  class="h-full w-full"
+                >
+                  <template x-if="image.media_type === 'image'">
+                    <img
+                      :src="image.src"
+                      :alt="image.alt"
+                      class="h-full w-full object-cover"
+                    >
+                  </template>
+                  <template x-if="image.media_type === 'video'">
+                    <div></div>
+                  </template>
+                </div>
+              </div>
+            </template>
+          </div>
+        </div>
+        <button
+          x-show="images.length > slidesPerView"
+          @click="thumbsSlider.slideNext()"
+          :class="isEnd ? 'text-sc-btn-primary-bg-default/50' : 'text-sc-btn-primary-bg-default'"
+        >
+          {% render 'icon', name: 'slider-arrow', class: 'w-7.5 h-7.5 rotate-180' %}
+        </button>
+      </div>
+    </div>
+    <!-- DESKTOP VIEW -->
+    <div class="hidden grid-cols-2 gap-5 lg:grid">
+      <template x-for="image in images">
+        <div class="h-full w-full" :class="images.length === 1 && 'col-span-2' ">
+          <template x-if="image.media_type === 'image'">
+            <img :src="image.src" :alt="image.alt" class="h-full w-full object-cover">
+          </template>
+          <template x-if="image.media_type === 'video'">
+            <div></div>
+          </template>
+        </div>
+      </template>
+
+      {% if featured_icons != blank %}
+        <div class="mt-12.5 col-span-2 flex justify-between gap-5 pb-20">
+          {% for block in featured_icons %}
+            {% assign icon = block.settings.icon %}
+            {% assign text = block.settings.text %}
+            {% if icon != blank %}
+              <div class="flex flex-col items-center gap-2 text-center">
+                <div class="h-[35px] w-[35px]">
+                  {{
+                    icon
+                    | image_url: width: 315
+                    | image_tag: loading: 'lazy', alt: icon.alt, class: 'block object-contain object-center'
+                  }}
+                </div>
+                <p class="text-sc-body-primary text-xs font-medium">{{ text }}</p>
+              </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+      {% endif %}
+    </div>
+  </div>
+  <!-- PRODUCT INFO -->
+  <div class="px-7.5 pb-15 mx-auto max-w-[530px] pt-5 md:px-0 lg:m-0 lg:p-0">
+    {% for block in section.blocks %}
+      {% case block.type %}
+        {% when '@app' %}
+          <div class="">{% render block %}</div>
+        {% when 'product_title' %}
+          <h1 class="font-primary text-sc-title mb-4 text-3xl font-medium md:text-4xl">
+            {{ product.title }}
+          </h1>
+        {% when 'product_description' %}
+          {% if product.description != blank %}
+            <div class="mb-7.5 text-sc-body-primary line-clamp-3 mt-5 text-base">
+              {{ product.description | strip_html }}
+            </div>
+          {% endif %}
+        {% when 'product_form' %}
+          {% form 'product', product, class: 'mb-7.5' %}
+            <div class="gap-7.5 flex flex-col">
+              {% unless product.has_only_default_variant %}
+                <template x-for="(option, index) in productOptions">
+                  <template x-if="window.colorOptionNames.includes(option.name)">
+                    <div class="order-[-1] flex items-center justify-between">
+                      <div class="text-13-px space-x-1">
+                        <span x-text="`${option.name}:`" class="text-sc-title"></span>
+                        <span x-text="selectedVariant[`option${option.position}`]" class="text-sc-subtitle"></span>
+                      </div>
+                      <div class="flex items-center gap-1">
+                        <template x-for="value in option.values">
+                          <button
+                            :aria-label="value"
+                            class="option-color"
+                            :class="
+                              {
+                                active: selectedVariant.options.includes(value),
+                                unavailable: !product.variants.some(variant => variant.available && variant.options[index] === value) && index === 0 ||
+                                  !product.variants.some(variant => variant.available && variant.option1 === selectedVariant.option1 && variant.options[index] === value) && index === 1 ||
+                                  !product.variants.some(variant => variant.available && variant.option1 === selectedVariant.option1 && variant.option2 === selectedVariant.option2 && variant.options[index] === value) && index === 2
+                              }
+                            "
+                            type="button"
+                            @click="
+                              changeVariant({
+                                name: option.name,
+                              }, value)
+                            "
+                          >
+                            <span class="sr-only absolute" x-text="`Color swatch ${value}`"></span>
+                            <div
+                              class="swatch"
+                              :data-color-swatch="window.handleize(value)"
+                            ></div>
+                          </button>
+                        </template>
+                      </div>
+                    </div>
+                  </template>
+                </template>
+                <template x-for="(option, index) in productOptions">
+                  <template x-if="!window.colorOptionNames.includes(option.name)">
+                    <div class="flex flex-col items-start lg:flex-row lg:justify-between">
+                      <div class="text-13-px mb-2.5 shrink-0 space-x-1">
+                        <span x-text="`${option.name}:`" class="text-sc-title"></span>
+                        <span x-text="selectedVariant[`option${option.position}`]" class="text-sc-subtitle"></span>
+                      </div>
+
+                      <div class="flex flex-wrap gap-2.5">
+                        <template x-for="value in option.values">
+                          <button
+                            type="button"
+                            @click="
+                              changeVariant({
+                                name: option.name,
+                              }, value)
+                            "
+                            class="option-default max-w-max rounded-none"
+                            :class="
+                              {
+                                active: selectedVariant.options.includes(value),
+                                unavailable: !product.variants.some(variant => variant.available && variant.options[index] === value) && index === 0 ||
+                                  !product.variants.some(variant => variant.available && variant.option1 === selectedVariant.option1 && variant.options[index] === value) && index === 1 ||
+                                  !product.variants.some(variant => variant.available && variant.option1 === selectedVariant.option1 && variant.option2 === selectedVariant.option2 && variant.options[index] === value) && index === 2
+                              }
+                            "
+                          >
+                            <span x-text="value"></span>
+                          </button>
+                        </template>
+                      </div>
+                    </div>
+                  </template>
+                </template>
+              {% endunless %}
+
+              <template x-if="product.selling_plan_groups.length">
+                <div>
+                  <!-- SELLING OPTIONS -->
+                  <fieldset x-cloak x-show="!product.requires_selling_plan">
+                    <span class="text-sc-title mb-3 block text-sm">Select your plan</span>
+                    <div class="mb-4">
+                      <input
+                        id="one-time-switch-{{ section.id }}"
+                        type="radio"
+                        class="peer hidden"
+                        :checked="!sellPlanId"
+                        @change="$el.checked ? sellPlanId = null : null"
+                        name="sell_plan_input-{{ section.id }}"
+                      >
+                      <label
+                        for="one-time-switch-{{ section.id }}"
+                        class="peer-checked:bg-sc-subtitle/30 bg-sc-subtitle/5 flex items-center justify-between py-3 px-5 duration-200"
+                      >
+                        <span
+                          class="text-base duration-200"
+                          :class="sellPlanId === null ? 'text-sc-title' : 'text-sc-body-primary'"
+                        >
+                          One-Time Purchase
+                        </span>
+
+                        <span class="flex items-center">
+                          <s
+                            x-show="selectedVariant.compare_at_price && selectedVariant.compare_at_price > selectedVariant.price"
+                            x-text="window.currency(selectedVariant.compare_at_price * qty)"
+                            class="text-sc-body-primary mr-1 text-sm"
+                          ></s>
+                          <span
+                            x-text="window.currency(selectedVariant.price * qty)"
+                            class="text-sc-title text-base font-medium"
+                          ></span>
+                        </span>
+                      </label>
+                    </div>
+                    <div>
+                      <input
+                        id="subscription-switch-{{ section.id }}"
+                        type="radio"
+                        class="peer hidden"
+                        :checked="sellPlanId"
+                        @change="$el.checked ? sellPlanId = sellPlan.id : null"
+                        name="sell_plan_input-{{ section.id }}"
+                      >
+                      <label
+                        for="subscription-switch-{{ section.id }}"
+                        class="peer-checked:bg-sc-subtitle/30 bg-sc-subtitle/5 block py-3 px-5 duration-200"
+                      >
+                        <span class="flex items-center justify-between">
+                          <span
+                            class="block text-base font-medium duration-200"
+                            :class="sellPlanId !== null ? 'text-sc-title' : 'text-sc-body-primary'"
+                          >
+                            {{ subs_label }}
+                            <span
+                              x-text="sellPlan.price_adjustments[0].value + '%'"
+                            ></span>
+                          </span>
+
+                          <span class="flex items-center">
+                            <s
+                              x-text="window.currency(selectedVariant.price * qty)"
+                              class="text-sc-body-primary mr-1 text-sm"
+                            ></s>
+                            <span
+                              x-text="window.currency(selectedVariant.price * (1 - (sellPlan.price_adjustments[0].value / 100)) * qty)"
+                              class="text-sc-title text-base font-medium"
+                            ></span>
+                          </span>
+                        </span>
+                        <span class="text-sc-body-primary mt-1 flex items-center justify-between text-xs">
+                          <span>{{ 'product.subscription.slogan' | t }}</span>
+                          <span
+                            x-show="sellPlan.name.includes('{{ subs_most_popular_frequency }}')"
+                            class="text-sc-subtitle font-medium"
+                          >
+                            Most popular
+                          </span>
+                        </span>
+                      </label>
+                    </div>
+                  </fieldset>
+                  <!-- FREQUENCY SWITCHER -->
+                  <div
+                    x-cloak
+                    x-show="sellPlanId"
+                    x-collapse
+                  >
+                    <div>
+                      <span class="text-sc-title mb-3 mt-5 block text-sm">Recurring refills</span>
+                      <button
+                        type="button"
+                        aria-label="Open subscription frequency drawer"
+                        class="bg-sc-subtitle/5 flex w-full items-center justify-between px-5 py-3"
+                        :class="product.selling_plan_groups[0].selling_plans.length === 1 && 'pointer-events-none'"
+                        @click="
+                          $store.drawer.show({
+                            id: '{{ id }}'
+                          })
+                        "
+                      >
+                        <span class="flex items-center">
+                          <span
+                            class="text-sc-body-primary mr-2.5 text-base capitalize"
+                            x-text="sellPlan.name.replace('Delivery', '').trim()"
+                          ></span>
+                          <span
+                            x-show="sellPlan.name.includes('{{ subs_most_popular_frequency }}')"
+                            class="text-sc-subtitle text-xs font-medium"
+                          >
+                            Most popular
+                          </span>
+                        </span>
+                        <span
+                          x-show="product.selling_plan_groups[0].selling_plans.length > 1"
+                          class="text-sc-body-primary flex items-center text-base"
+                        >
+                          <span>Edit</span>
+                          <svg
+                            class="ml-2"
+                            aria-hidden="true"
+                            width="7"
+                            height="11"
+                            viewBox="0 0 7 11"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <path fill-rule="evenodd" clip-rule="evenodd" d="M1.23938 10.3553C1.10271 10.3553 1.01218 10.2362 1.01218 10.1172C1.01218 10.0455 1.03525 9.9981 1.08052 9.95065L5.44242 5.54496L1.08052 1.16356C0.989998 1.06867 0.966925 0.92541 1.05745 0.830534C1.14797 0.735645 1.28464 0.711458 1.37515 0.806348L1.39822 0.830534L5.94211 5.40269C6.03263 5.49757 6.03263 5.64083 5.94211 5.73571L1.39822 10.2848C1.35296 10.3322 1.28463 10.3555 1.23936 10.3555L1.23938 10.3553Z" fill="currentColor" stroke="currentColor"/>
+                          </svg>
+                        </span>
+                      </button>
+                      {% render 'selling-plan-frequency',
+                        id: id,
+                        subs_most_popular_frequency: subs_most_popular_frequency
+                      %}
+                    </div>
+                  </div>
+                </div>
+              </template>
+
+              <div class="flex flex-col">
+                <template x-if="sellPlanId">
+                  <span>
+                    <s
+                      x-text="window.currency(selectedVariant.price * qty)"
+                      class="mr-1 text-sm"
+                    ></s>
+                    <span
+                      x-text="window.currency(selectedVariant.price * (1 - (sellPlan.price_adjustments[0].value / 100)) * qty)"
+                      class="text-lg font-medium"
+                    ></span>
+                  </span>
+                </template>
+                <template x-if="!sellPlanId">
+                  <span class="text-sc-title flex items-center">
+                    <s
+                      x-show="selectedVariant.compare_at_price && selectedVariant.compare_at_price > selectedVariant.price"
+                      x-text="window.currency(selectedVariant.compare_at_price)"
+                      class="mr-1 text-sm"
+                    ></s>
+                    <span
+                      x-text="window.currency(selectedVariant.price)"
+                      class="text-lg font-medium"
+                    ></span>
+                  </span>
+                </template>
+
+                <!-- payment_terms -->
+                <div class="">
+                  {{ form | payment_terms }}
+                </div>
+                <button
+                  type="button"
+                  :aria-busy="loading"
+                  class="{% render 'btn-class', btn: 'btn_primary_pill_fill' %} mt-5 min-h-[50px] w-full"
+                  :disabled="!selectedVariant.available"
+                  @click="addToCart"
+                >
+                  <span
+                    x-text="selectedVariant.available ? sellPlanId ? 'Subscribe' : 'Add To Cart' : 'Sold out'"
+                  ></span>
+                  {% render 'btn-loader' %}
+                </button>
+              </div>
+            </div>
+          {% endform %}
+        {% when 'product_icons_with_text' %}
+          {% if icons_with_text.count > 0 %}
+            <div class="mb-7.5 flex justify-between md:justify-start md:gap-x-2.5">
+              {% for icon_with_text in icons_with_text %}
+                {% assign icon = icon_with_text.icon %}
+                {% assign text = icon_with_text.text %}
+                <div class="flex flex-col items-center">
+                  <div class="mb-2 max-w-[40px]">
+                    {{
+                      icon
+                      | image_url: width: 1000
+                      | image_tag: alt: icon.alt, loading: 'lazy', class: 'w-full h-full object-contain'
+                    }}
+                  </div>
+                  <span class="text-sc-body-primary text-center text-xs">{{ text }}</span>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% when 'product_accordion' %}
+          <div
+            x-data="{active: 1}"
+            class="mb-7.5 space-y-5"
+          >
+            {% if description != blank %}
+              {% assign title = 'product.info_title.description' | t %}
+              {% render 'product-info-accordion-item',
+                active: 1,
+                title: title,
+                content: description,
+                class: 'border-y border-gray-200 py-5'
+              %}
+            {% endif %}
+            {% if how_to_use != blank %}
+              {% assign title = 'product.info_title.how_to_use' | t %}
+              {% render 'product-info-accordion-item', active: 2, title: title, content: how_to_use %}
+            {% endif %}
+
+            {% if ingredients != blank %}
+              {% assign title = 'product.info_title.ingredients' | t %}
+              {% render 'product-info-accordion-item', active: 3, title: title, content: ingredients %}
+            {% endif %}
+
+            {% if faq.count > 0 %}
+              {% assign title = 'product.info_title.faq' | t %}
+              {% render 'product-info-accordion-item', active: 4, title: title, content: faq_content %}
+            {% endif %}
+          </div>
+        {% when 'product_upsells' %}
+          <div class="mb-7.5">
+            <span class="text-sc-title mb-3 block text-lg font-medium">
+              {{ 'product.info_title.upsells' | t }}
+            </span>
+            <div
+              class="product-recommendations space-y-5"
+              x-init="loadRecommendations('{{ routes.product_recommendations_url }}?section_id={{ section.id }}&product_id={{ product.id }}&intent=related')"
+            >
+              {%- if recommendations.performed? and recommendations.products_count > 0 -%}
+                {%- for product in recommendations.products -%}
+                  {% if forloop.index < 4 %}
+                    {% render 'product-info-upsell-item', product: product %}
+                  {% endif %}
+                {% endfor %}
+              {% endif %}
+            </div>
+          </div>
+      {% endcase %}
+    {% endfor %}
+  </div>
+
+  {% render 'product-json' %}
+</div>
+
+{% schema %}
+{
+  "name": "Product",
+  "settings": [
+    {
+      "type": "text",
+      "id": "subs_label",
+      "label": "Selling plan label",
+      "default": "Subscribe & Save"
+    },
+    {
+      "type": "text",
+      "id": "subs_most_popular_frequency",
+      "label": "Subscription must popular frequency",
+      "default": "10"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "product_title",
+      "name": "Product title",
+      "limit": 1,
+      "settings": []
+    },
+    {
+      "type": "product_description",
+      "name": "Product description",
+      "limit": 1,
+      "settings": []
+    },
+    {
+      "type": "product_form",
+      "name": "Product form",
+      "limit": 1,
+      "settings": []
+    },
+    {
+      "type": "product_icons_with_text",
+      "name": "Product icons with text",
+      "limit": 1,
+      "settings": []
+    },
+    {
+      "type": "product_accordion",
+      "name": "Product accordion",
+      "limit": 1,
+      "settings": []
+    },
+    {
+      "type": "product_upsells",
+      "name": "Product upsells",
+      "limit": 1,
+      "settings": []
+    },
+    {
+      "type": "featured_icons",
+      "name": "Product featured icons",
+      "limit": 3,
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "icon",
+          "label": "Icon"
+        },
+        {
+          "type": "text",
+          "id": "text",
+          "label": "Text"
+        }
+      ]
+    },
+    {
+      "type": "@app"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Product",
+      "blocks": [
+        {
+          "type": "product_title"
+        },
+        {
+          "type": "product_description"
+        },
+        {
+          "type": "product_form"
+        },
+        {
+          "type": "product_icons_with_text"
+        },
+        {
+          "type": "product_accordion"
+        },
+        {
+          "type": "product_upsells"
+        }
+      ]
+    }
+  ],
+  "enabled_on": {
+    "templates": ["product"]
+  }
+}
+{% endschema %}
