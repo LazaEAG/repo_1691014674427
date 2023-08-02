@@ -1,0 +1,342 @@
+{% comment %}
+  PARAMS:
+    cart_type => drawer, full_width STRING
+{% endcomment %}
+
+{% case cart_type %}
+  {% when 'drawer' %}
+    <div>
+      <div
+        class="flex w-full items-start"
+        :class="{'mt-7.5 md:mt-5': index !== 0}"
+      >
+        <!-- LINE ITEM IMAGE -->
+        <a
+          :data-line-item-img="item.key"
+          aria-busy="false"
+          class="text-sc-subtitle relative mr-3 block h-[80px] w-[80px] shrink-0 md:h-[80px] md:w-[80px]"
+          :href="item.url"
+        >
+          <img
+            :src="item.image ? item.image : ''"
+            :alt="item.product_title"
+            class="h-full w-full object-contain"
+          >
+          {% render 'btn-loader' %}
+        </a>
+        <!-- LINE ITEM INFO -->
+        <div class="flex w-full flex-wrap items-start justify-start gap-2 md:flex-nowrap md:justify-between">
+          <!-- TEXT -->
+          <div class="flex flex-col space-y-1">
+            <h5
+              class="text-sc-title btn-link-anim text-sm font-medium md:text-base"
+            >
+              <a :href="item.url">
+                <span x-text="item.product_title" class="font-primary"></span>
+              </a>
+            </h5>
+            <span
+              x-show="item.selling_plan_allocation"
+              class="text-sc-body-primary text-xs md:text-sm"
+              x-text="item.selling_plan_allocation.selling_plan.name"
+            ></span>
+            <span
+              x-show="item.product_title !== item.title"
+              class="text-sc-body-primary text-xs md:text-sm"
+              x-text="item.variant_title"
+            ></span>
+
+            <span class="text-sc-body-primary text-sm">
+              <template x-if="!item.selling_plan_allocation">
+                <s
+                  x-show="item.compare_at_price > item.price"
+                  class="mr-1 inline-block text-xs"
+                  x-text="window.currency(item.compare_at_price * item.quantity)"
+                ></s>
+              </template>
+
+              <template x-if="item.selling_plan_allocation">
+                <s
+                  class="mr-1 inline-block text-xs"
+                  x-text="window.currency(item.selling_plan_allocation.compare_at_price * item.quantity)"
+                ></s>
+              </template>
+              <span
+                class="inline-block"
+                x-text="window.currency(item.price * item.quantity)"
+              ></span>
+            </span>
+          </div>
+          <!-- CONTROLS -->
+          <div class="flex shrink-0 items-center gap-2 md:ml-2.5 md:flex-col">
+            <!-- QTY BUTTONS -->
+            <div class="rounded-r-input bg-sc-bg-secondary flex items-center overflow-hidden">
+              <button
+                aria-label="Minus"
+                type="button"
+                class="py-1 px-3"
+                @click="
+                  $store['cart'].changeQuantity({
+                    key: item.key,
+                    quantity: item.quantity - 1
+                  })
+                "
+              >
+                {% render 'icon',
+                  name: 'qty-minus',
+                  class: 'w-[10px] h-[10px] text-sc-title smD:hover:text-sc-title/30 duration-200'
+                %}
+              </button>
+              <input
+                type="number"
+                pattern="[0-9]*"
+                min="1"
+                class="text-sc-title w-[24px] bg-transparent py-1 text-center text-sm"
+                @input="
+                  (e) => {
+                    //await new qty
+                    if(e.target.value === '') {
+                      return;
+                    }
+
+                    $store['cart'].changeQuantity({
+                      key: item.key,
+                      quantity: +e.target.value
+                    })
+                  }
+                "
+                :value="item.quantity"
+              >
+              <button
+                aria-label="Plus"
+                type="button"
+                class="py-1 px-3"
+                @click="
+                  $store['cart'].changeQuantity({
+                    key: item.key,
+                    quantity: item.quantity + 1
+                  })
+                "
+              >
+                {% render 'icon',
+                  name: 'qty-plus',
+                  class: 'w-[10px] h-[10px] text-sc-title smD:hover:text-sc-title/30 duration-200'
+                %}
+              </button>
+            </div>
+            <button
+              aria-label="Remove item from cart"
+              type="button"
+              class="btn-link-anim-reverse text-sc-body-primary text-xs font-normal"
+              @click="$store.cart.removeItem(item.key)"
+            >
+              <span>Remove</span>
+            </button>
+          </div>
+        </div>
+      </div>
+      <!-- SUBSCRIPTION BLOCK HERE -->
+      <div
+        class="mt-5 flex items-start"
+        x-data="sellingPlan({ lineItem: item })"
+        @click="item.selling_plan_allocation ? removeSellingPlan() : showSellingPlanDrawer({ id: item.key })"
+      >
+        <input
+          :id="`subscription-checkbox-${item.key}`"
+          :aria-describedby="`subscription-checkbox-checkbox-text-${item.key}`"
+          :checked="item.selling_plan_allocation ? true : false"
+          type="checkbox"
+          class="rounded-r-input border-sc-title/60 accent-sc-subtitle pointer-events-none mt-[7px] h-5 w-5"
+        >
+        <div class="pointer-events-none ml-4">
+          <label
+            :for="`subscription-checkbox-${item.key}`"
+            class="font-primary text-sm font-medium"
+          >
+            Subscribe and Save 10%
+          </label>
+          <p
+            :id="`subscription-checkbox-checkbox-text-${item.key}`"
+            class="text-sc-body-primary text-xs"
+          >
+            Delay or cancel anytime
+          </p>
+        </div>
+        {% render 'line-item-selling-plan' %}
+      </div>
+    </div>
+  {% when 'full_width' %}
+    <div
+      class="px-7.5 border-sc-title/30 md:bg-sc-bg-primary md:border-b"
+      :class="
+        {
+          'border-b-transparent': index === $store['cart'].obj.items.length - 1,
+        }
+      "
+    >
+      <div
+        class="border-sc-title/30 border-b py-5 md:border-0"
+        :class="
+          {
+           'border-t': index === 0,
+           'border-b-transparent': index === $store['cart'].obj.items.length - 1,
+          }
+        "
+      >
+        <div class="flex w-full items-start">
+          <!-- LINE ITEM IMAGE -->
+          <a
+            :data-line-item-img="item.key"
+            aria-busy="false"
+            class="text-sc-subtitle relative mr-3 block h-[90px] w-[90px] shrink-0"
+            :href="item.url"
+          >
+            <img
+              :src="item.image ? item.image : ''"
+              :alt="item.product_title"
+              class="h-full w-full object-contain"
+            >
+            {% render 'btn-loader' %}
+          </a>
+          <!-- LINE ITEM INFO -->
+          <div class="flex w-full flex-col">
+            <h5
+              class="text-sc-title btn-link-anim mb-1 flex w-full items-center justify-between text-sm font-medium md:text-base"
+            >
+              <a :href="item.url">
+                <span x-text="item.product_title" class="font-primary"></span>
+              </a>
+
+              <button
+                type="button"
+                @click="$store.cart.removeItem(item.key)"
+                class="ml-1 shrink-0"
+              >
+                <span class="sr-only">Remove item</span>
+                {% render 'icon', name: 'close', size: 'md' %}
+              </button>
+            </h5>
+            <span
+              x-show="item.selling_plan_allocation"
+              class="text-sc-body-primary text-xs md:text-sm"
+              x-text="item.selling_plan_allocation.selling_plan.name"
+            ></span>
+            <span
+              x-show="item.product_title !== item.title"
+              class="text-sc-body-primary text-xs md:text-sm"
+              x-text="item.variant_title"
+            ></span>
+
+            <div class="mt-3.5 flex items-center justify-between">
+              <!-- CONTROLS -->
+              <!-- QTY BUTTONS -->
+              <div class="border-sc-title flex items-center overflow-hidden border">
+                <button
+                  aria-label="Minus"
+                  type="button"
+                  class="py-1 px-3"
+                  @click="
+                    $store['cart'].changeQuantity({
+                      key: item.key,
+                      quantity: item.quantity - 1
+                    })
+                  "
+                >
+                  {% render 'icon',
+                    name: 'qty-minus',
+                    class: 'w-[10px] h-[10px] text-sc-title smD:hover:text-sc-title/30 duration-200'
+                  %}
+                </button>
+                <input
+                  type="number"
+                  pattern="[0-9]*"
+                  min="1"
+                  class="text-sc-title w-[24px] bg-transparent py-1 text-center text-sm"
+                  @input="
+                    (e) => {
+                      //await new qty
+                      if(e.target.value === '') {
+                        return;
+                      }
+
+                      $store['cart'].changeQuantity({
+                        key: item.key,
+                        quantity: +e.target.value
+                      })
+                    }
+                  "
+                  :value="item.quantity"
+                >
+                <button
+                  aria-label="Plus"
+                  type="button"
+                  class="py-1 px-3"
+                  @click="
+                    $store['cart'].changeQuantity({
+                      key: item.key,
+                      quantity: item.quantity + 1
+                    })
+                  "
+                >
+                  {% render 'icon',
+                    name: 'qty-plus',
+                    class: 'w-[10px] h-[10px] text-sc-title smD:hover:text-sc-title/30 duration-200'
+                  %}
+                </button>
+              </div>
+
+              <span>
+                <template x-if="!item.selling_plan_allocation">
+                  <s
+                    x-show="item.compare_at_price > item.price"
+                    class="mr-1 inline-block text-xs"
+                    x-text="window.currency(item.compare_at_price * item.quantity)"
+                  ></s>
+                </template>
+
+                <template x-if="item.selling_plan_allocation">
+                  <s
+                    class="mr-1 inline-block text-xs"
+                    x-text="window.currency(item.selling_plan_allocation.compare_at_price * item.quantity)"
+                  ></s>
+                </template>
+                <span
+                  class="text-sc-title inline-block text-sm"
+                  x-text="window.currency(item.price * item.quantity)"
+                ></span>
+              </span>
+            </div>
+          </div>
+        </div>
+        <!-- SUBSCRIPTION BLOCK HERE -->
+        <div
+          class="mt-5 flex items-start"
+          x-data="sellingPlan({ lineItem: item })"
+          @click="item.selling_plan_allocation ? removeSellingPlan() : showSellingPlanDrawer({ id: item.key })"
+        >
+          <input
+            :id="`subscription-checkbox-${item.key}`"
+            :aria-describedby="`subscription-checkbox-checkbox-text-${item.key}`"
+            :checked="item.selling_plan_allocation ? true : false"
+            type="checkbox"
+            class="rounded-r-input border-sc-title/60 accent-sc-subtitle pointer-events-none mt-[7px] h-5 w-5"
+          >
+          <div class="pointer-events-none ml-4">
+            <label
+              :for="`subscription-checkbox-${item.key}`"
+              class="font-primary text-sm font-medium"
+            >
+              Subscribe and Save 10%
+            </label>
+            <p
+              :id="`subscription-checkbox-checkbox-text-${item.key}`"
+              class="text-sc-body-primary text-xs"
+            >
+              Delay or cancel anytime
+            </p>
+          </div>
+          {% render 'line-item-selling-plan' %}
+        </div>
+      </div>
+    </div>
+{% endcase %}
