@@ -1,0 +1,397 @@
+{% liquid
+  assign section_anchor_id = section.settings.section_anchor_id | handleize
+  assign color_scheme = section.settings.color_scheme
+
+  assign main_collection = section.settings.main_collection
+  assign main_collection_title = section.settings.main_collection_title | default: main_collection.title
+
+  assign content_align = section.settings.content_align
+  assign show_bg = section.settings.show_bg
+  assign show_atc = section.settings.show_atc
+
+  assign blocks = section.blocks
+
+  assign active_values_count = 0
+  for filter in collection.filters
+    if filter.type == 'price_range'
+      if filter.max_value.value != blank or filter.min_value.value != blank
+        assign active_values_count = active_values_count | plus: 1
+      endif
+    else
+      for active_value in filter.active_values
+        assign active_values_count = active_values_count | plus: 1
+      endfor
+    endif
+  endfor
+
+  assign pt_mob = section.settings.pt_mob
+  assign pb_mob = section.settings.pb_mob
+  assign pt_tab = section.settings.pt_tab
+  assign pb_tab = section.settings.pb_tab
+  assign pt_desk = section.settings.pt_desk
+  assign pb_desk = section.settings.pb_desk
+%}
+
+{% render 'section-paddings',
+  section_id: section.id,
+  pt_mob: pt_mob,
+  pb_mob: pb_mob,
+  pt_tab: pt_tab,
+  pb_tab: pb_tab,
+  pt_desk: pt_desk,
+  pb_desk: pb_desk
+%}
+
+<script id="collectionFilters" type="application/json">
+  {
+      {%- for filter in collection.filters -%}
+      "{{- filter.label | handleize -}}": { "isOpen": false },
+      {%- endfor -%}
+       "sort-by-desktop":  { "isOpen": false }
+  }
+</script>
+
+<div
+  id="main-collection"
+  class="color-scheme-{{ color_scheme }} bg-sc-bg-secondary bg-secondary-gradient"
+  :class="{ 'pointer-events-none' : isLoading }"
+  x-data="collectionFiltersTwo()"
+>
+  <!-- COLLECTION NAVIGATION -->
+  <div class="bg-sc-bg-primary sticky top-0 z-10">
+    <ul class="scrollbar-hide space-x-7.5 px-7.5 smD:space-x-20 mx-auto flex w-max w-full max-w-full snap-x items-center overflow-x-auto md:space-x-10">
+      <li
+        class="scroll-ml-7.5 pb-4.5 snap-start border-b-[2px] pt-4 duration-300 ease-in-out md:pb-3 md:pt-5"
+        :class="activeCollection.handle === '{{- main_collection.handle -}}' ? 'border-sc-subtitle' : 'border-transparent'"
+      >
+        <a
+          href="{{ main_collection.url }}"
+          aria-label="Open collection - {{ main_collection_title }}"
+          class="hover:text-sc-link-primary-text-default whitespace-nowrap text-base font-medium duration-300 ease-in-out"
+          :class="activeCollection.handle === '{{- main_collection.handle -}}' ? 'text-sc-subtitle pointer-events-none' : 'text-sc-body-primary'"
+          @click.prevent="changeCollection()"
+        >
+          {{ main_collection_title }}
+        </a>
+      </li>
+      {% for block in blocks %}
+        {% assign block_collection = block.settings.custom_collection %}
+        {% assign block_collection_handle = block_collection.handle %}
+        {% assign block_collection_title = block.settings.custom_collection_title | default: block_collection.title %}
+        <li
+          class="scroll-ml-7.5 pb-4.5 snap-start border-b-[2px] pt-4 duration-300 ease-in-out md:pb-3 md:pt-5"
+          :class="activeCollection.handle === '{{- block_collection_handle -}}' ? 'border-sc-subtitle' : 'border-transparent'"
+        >
+          <a
+            href="{{ block_collection.url }}"
+            aria-label="Open collection - {{ block_collection_title }}"
+            class="hover:text-sc-link-primary-text-default whitespace-nowrap text-base font-medium duration-300 ease-in-out"
+            :class="activeCollection.handle === '{{- block_collection_handle -}}' ? 'text-sc-subtitle pointer-events-none' : 'text-sc-body-primary'"
+            @click.prevent="changeCollection()"
+          >
+            {{ block_collection_title }}
+          </a>
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <div data-collection-content data-section-id="{{ section.id }}">
+    <!-- FILTERS -->
+    <div
+      class="space-y-3"
+      x-intersect:leave="floatFilters = true"
+      x-intersect:enter="floatFilters = false"
+    >
+      <div class="container flex items-center justify-between space-x-4">
+        <button
+          type="button"
+          class="text-sc-title btn-link-anim group mb-2 flex cursor-pointer items-center space-x-2"
+          @click="$store.collectionFiltersStore.show()"
+        >
+          {% render 'icon', name: 'filter-ranges', class: 'w-5 text-sc-title fill-sc-bg-primary' %}
+          <span class="text-sc-title text-base">{{ 'collection.facets.filters' | t }}</span>
+        </button>
+        {% liquid
+          assign sort_by = collection.sort_by | default: 'manual'
+
+          for option in collection.sort_options
+            if option.value == sort_by
+              assign sort_by_name = option.name
+            endif
+          endfor
+        %}
+
+        <div class="relative hidden w-max lg:block" x-data="{ isOpen: false }">
+          <span class="flex space-x-2">
+            <span class="text-sc-title text-base">{{ 'collection.sorting.title' | t }}:</span>
+            <button
+              type="button"
+              class="flex items-center space-x-2"
+              aria-controls="filter-dialog-sort-by"
+              aria-expanded="false"
+              @click="isOpen = !isOpen"
+            >
+              <span class="text-sc-title group flex shrink-0 items-center space-x-2 text-base">
+                <span>
+                  {{- sort_by_name -}}
+                </span>
+                <span
+                  class="bg-sc-bg-primary group-hover:bg-sc-title flex h-6 w-6 items-center justify-center rounded-full duration-300 ease-in-out"
+                  :class="{ 'rotate-180' : isOpen }"
+                >
+                  {% render 'icon',
+                    name: 'chevron-mini',
+                    class: 'text-sc-title duration-300 ease-in-out group-hover:text-sc-bg-secondary'
+                  %}
+                </span>
+              </span>
+            </button></span
+          >
+          <facet-dialog
+            id="filter-dialog-sort-by"
+            x-show="isOpen"
+            class="bg-sc-bg-primary border-sc-title/20 absolute right-0 z-10 mt-2 flex w-max border"
+            x-cloak
+            x-transition
+            @click.away="isOpen = false"
+          >
+            <ul role="list">
+              {%- for option in collection.sort_options -%}
+                <li class="m-0">
+                  <label
+                    class="btn-link-anim group block cursor-pointer py-2 px-4"
+                    for="Filter-{{ option.name | escape }}-sort"
+                  >
+                    <input
+                      type="radio"
+                      name="sort_by"
+                      value="{{ option.value | escape }}"
+                      id="Filter-{{ option.name | escape }}-sort"
+                      {% if option.value == sort_by %}
+                        checked
+                      {% endif %}
+                      class="peer hidden"
+                      @change="isOpen = false; setSortBy('{{ option.value | escape }}');"
+                    >
+
+                    <span
+                      aria-hidden="true"
+                      class="text-sc-title text-sm opacity-70 !duration-500 ease-in-out group-hover:opacity-100 peer-checked:opacity-100"
+                    >
+                      {{- option.name | escape -}}
+                    </span>
+                  </label>
+                </li>
+              {%- endfor -%}
+            </ul>
+          </facet-dialog>
+        </div>
+      </div>
+      {% render 'active-filters',
+        collection: collection,
+        active_values_count: active_values_count,
+        bg_color: 'bg-sc-bg-primary',
+        class: 'container'
+      %}
+    </div>
+
+    <!-- COLLECTION GRID -->
+    <div
+      class="container pt-5 duration-500 ease-in-out"
+      :class="isLoading ? 'opacity-50' : 'opacity-100'"
+    >
+      {% if collection.products.size > 0 %}
+        <div
+          id="coll-grid"
+          class="md:gap-7.5 smD:grid-cols-3 grid w-full grid-cols-2 gap-x-2.5 gap-y-5 2xl:grid-cols-4"
+        >
+          {% paginate collection.products by 20 %}
+            {% for product in collection.products %}
+              {% render 'product-card',
+                product: product,
+                content_align: content_align,
+                show_bg: show_bg,
+                show_atc: show_atc,
+                index: forloop.index,
+                bg_color: 'bg-sc-bg-primary bg-sc-bg-primary-gradient'
+              %}
+            {% endfor %}
+          {% endpaginate %}
+        </div>
+        <!-- FLOAT FILTERS -->
+        <button
+          type="button"
+          class="{% render 'btn-class', btn: 'btn_primary_pill_fill' %} no-select mt-7.5 group sticky bottom-10 left-1/2 w-max -translate-x-1/2 duration-300 ease-in-out md:bottom-10"
+          :class="floatFilters ? 'opacity-100' : 'opacity-0'"
+          @click="$store.collectionFiltersStore.show()"
+        >
+          {% render 'icon', name: 'filter-ranges', class: 'w-5' %}
+          <span>{{ 'collection.facets.filters' | t }}</span>
+        </button>
+      {% else %}
+        <div class="flex flex-col items-center py-20">
+          {% render 'icon', name: 'empty', class: 'w-15 h-15 mx-auto mb-5' %}
+          <h2 class="text-sc-title font-primary text-center text-xl font-medium">
+            {% if active_values_count > 0 %}
+              {{ 'collection.general.no_matches' | t }}
+            {% else %}
+              {{ 'collection.general.empty' | t }}
+            {% endif %}
+          </h2>
+          {% if active_values_count > 0 %}
+            <button
+              class="no-select-all text-sc-title btn-link-anim-reverse mt-5 text-base"
+              type="button"
+              @click.prevent="clearFilter('{{ collection.url }}')"
+            >
+              <span class="sr-only">Clear all filters</span>
+              <span>
+                {{ 'collection.facets.clear_all' | t }}
+              </span>
+            </button>
+          {% endif %}
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- LOAD MORE -->
+    {% paginate collection.products by 20 %}
+      {% if paginate.next %}
+        <div
+          x-cloak
+          x-show="hasNextPage && !isLoading"
+          data-next-page
+          class="h-2 bg-transparent"
+          x-intersect:enter.margin.25%="loadMore"
+        ></div>
+      {% endif %}
+    {% endpaginate %}
+  </div>
+  {% render 'facets', collection: collection %}
+</div>
+
+{% schema %}
+{
+  "name": "Main collection 2",
+  "tag": "section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "section_anchor_id",
+      "label": "Section anchor id",
+      "default": "Main collection 2"
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "Color scheme"
+    },
+    {
+      "type": "header",
+      "content": "Content settings"
+    },
+    {
+      "type": "collection",
+      "id": "main_collection",
+      "label": "Main collection"
+    },
+    {
+      "type": "text",
+      "id": "main_collection_title",
+      "label": "Main collection title (optional)",
+      "default": "All"
+    },
+    {
+      "type": "header",
+      "content": "Product card settings"
+    },
+    {
+      "type": "select",
+      "id": "content_align",
+      "label": "Card content align",
+      "options": [
+        {
+          "value": "left",
+          "label": "Left"
+        },
+        {
+          "value": "center",
+          "label": "Center"
+        }
+      ],
+      "default": "left"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_bg",
+      "label": "Show background",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_atc",
+      "label": "Show quick order",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "Padding Y settings"
+    },
+    {
+      "type": "number",
+      "id": "pt_mob",
+      "label": "Mobile padding top in px",
+      "default": 0
+    },
+    {
+      "type": "number",
+      "id": "pb_mob",
+      "label": "Mobile padding bottom in px",
+      "default": 0
+    },
+    {
+      "type": "number",
+      "id": "pt_tab",
+      "label": "Tablet padding top in px",
+      "default": 0
+    },
+    {
+      "type": "number",
+      "id": "pb_tab",
+      "label": "Tablet padding bottom in px",
+      "default": 0
+    },
+    {
+      "type": "number",
+      "id": "pt_desk",
+      "label": "Desktop padding top in px",
+      "default": 0
+    },
+    {
+      "type": "number",
+      "id": "pb_desk",
+      "label": "Desktop padding bottom in px",
+      "default": 0
+    }
+  ],
+  "blocks": [
+    {
+      "name": "Collection",
+      "type": "collection",
+      "settings": [
+        {
+          "type": "collection",
+          "id": "custom_collection",
+          "label": "Collection"
+        },
+        {
+          "type": "text",
+          "id": "custom_collection_title",
+          "label": "Collection title (optional)"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}
