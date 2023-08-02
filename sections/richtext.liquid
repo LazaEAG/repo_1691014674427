@@ -1,0 +1,203 @@
+<!-- richtext.liquid -->
+{% liquid
+  assign title = section.settings.title
+  assign text = section.settings.text
+  assign btn = section.settings.btn
+  assign btn_text = section.settings.btn_text
+  assign btn_link = section.settings.btn_link
+  assign color_scheme = section.settings.color_scheme
+  assign pt_mob = section.settings.pt_mob
+  assign pb_mob = section.settings.pb_mob
+  assign pt_tab = section.settings.pt_tab
+  assign pb_tab = section.settings.pb_tab
+  assign pt_desk = section.settings.pt_desk
+  assign pb_desk = section.settings.pb_desk
+%}
+
+{% render 'section-paddings',
+  section_id: section.id,
+  pt_mob: pt_mob,
+  pb_mob: pb_mob,
+  pt_tab: pt_tab,
+  pb_tab: pb_tab,
+  pt_desk: pt_desk,
+  pb_desk: pb_desk
+%}
+
+<div
+  id="{{ section_anchor_id }}"
+  data-section-id="{{ section.id }}"
+  class="color-scheme-{{ color_scheme }} bg-sc-bg-primary bg-primary-gradient"
+>
+  <div class="container">
+    {% if title != blank %}
+      <div class="mb-3 overflow-hidden">
+        <h2
+          class="animate__animated text-sc-title font-primary items-center text-center text-4xl font-medium opacity-0 md:text-5xl"
+          x-intersect="$el.classList.add('animate__fadeInUp')"
+        >
+          {{ title }}
+        </h2>
+      </div>
+    {% endif %}
+    {% if text != blank %}
+      <div class="overflow-hidden">
+        <div
+          class="animate__animated eag-delay-500ms text-sc-body-primary 2k:text-2xl smD:text-lg text-center text-base opacity-0"
+          x-intersect="$el.classList.add('animate__fadeInUp')"
+        >
+          {{ text }}
+        </div>
+      </div>
+    {% endif %}
+    {% if btn_text != blank %}
+      <a
+        class="{% render 'btn-class', btn: btn %} mx-auto mt-10"
+        href="{{ btn_link }}"
+        aria-label="{{ btn_text }}"
+      >
+        <span>{{ btn_text }}</span>
+      </a>
+    {% endif %}
+  </div>
+</div>
+{% schema %}
+{
+  "name": "Rich Text",
+  "tag": "section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "section_anchor_id",
+      "label": "Section anchor id",
+      "default": "Rich Text"
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "Color scheme"
+    },
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Section title",
+      "default": "Section title"
+    },
+    {
+      "type": "richtext",
+      "id": "text",
+      "label": "Section text",
+      "default": "<p>Section text</p>"
+    },
+    {
+      "type": "header",
+      "content": "Button settings"
+    },
+    {
+      "type": "text",
+      "id": "btn_text",
+      "label": "Button text",
+      "default": "button text"
+    },
+    {
+      "type": "url",
+      "id": "btn_link",
+      "label": "Button link"
+    },
+    {
+      "type": "select",
+      "id": "btn",
+      "label": "Select button type",
+      "options": [
+        {
+          "value": "btn_primary_main_fill",
+          "label": "main primary fill"
+        },
+        {
+          "value": "btn_secondary_main_fill",
+          "label": "main secondary fill"
+        },
+        {
+          "value": "btn_primary_main_outline",
+          "label": "main primary outline"
+        },
+        {
+          "value": "btn_secondary_main_outline",
+          "label": "main secondary outline"
+        },
+        {
+          "value": "btn_primary_pill_fill",
+          "label": "pill primary fill"
+        },
+        {
+          "value": "btn_secondary_pill_fill",
+          "label": "pill secondary fill"
+        },
+        {
+          "value": "btn_primary_pill_outline",
+          "label": "pill primary outline"
+        },
+        {
+          "value": "btn_secondary_pill_outline",
+          "label": "pill secondary outline"
+        },
+        {
+          "value": "link_primary",
+          "label": "Link primary"
+        },
+        {
+          "value": "link_secondary",
+          "label": "Link secondary"
+        }
+      ],
+      "default": "btn_primary_main_fill"
+    },
+    {
+      "type": "header",
+      "content": "Padding Y settings"
+    },
+    {
+      "type": "number",
+      "id": "pt_mob",
+      "label": "Mobile padding top in px",
+      "default": 80
+    },
+    {
+      "type": "number",
+      "id": "pb_mob",
+      "label": "Mobile padding bottom in px",
+      "default": 80
+    },
+    {
+      "type": "number",
+      "id": "pt_tab",
+      "label": "Tablet padding top in px",
+      "default": 80
+    },
+    {
+      "type": "number",
+      "id": "pb_tab",
+      "label": "Tablet padding bottom in px",
+      "default": 80
+    },
+    {
+      "type": "number",
+      "id": "pt_desk",
+      "label": "Desktop padding top in px",
+      "default": 80
+    },
+    {
+      "type": "number",
+      "id": "pb_desk",
+      "label": "Desktop padding bottom in px",
+      "default": 80
+    }
+  ],
+  "presets": [
+    {
+      "name": "Rich Text",
+      "category": "Repeatable"
+    }
+  ]
+}
+{% endschema %}
