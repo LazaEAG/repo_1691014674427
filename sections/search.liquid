@@ -1,0 +1,418 @@
+{% liquid
+  assign search_menu = section.settings.search_menu
+
+  assign search_upsells_enabled = section.settings.search_upsells_enabled
+  assign search_upsells_title = section.settings.search_upsells_title
+  assign search_upsells = section.settings.search_upsells
+%}
+
+<template x-if="$store.drawer.id === 'search'">
+  <template x-teleport="#drawer-overlay">
+    <div
+      x-cloak
+      x-show="$store.drawer.id === 'search'"
+      class="bg-sc-bg-primary flex h-full flex-col overflow-hidden pt-5 shadow"
+      x-data="searchData()"
+    >
+      <header class="border-sc-title/20 px-7.5 mb-5 flex items-center justify-between space-x-4 border-b pb-2 md:hidden md:px-10">
+        <h4 class="text-sc-subtitle text-lg font-medium">
+          {{- 'general.search.title' | t -}}
+        </h4>
+        <button
+          type="button"
+          @click="$store.drawer.hide()"
+          class="text-sc-title/60"
+        >
+          <span class="sr-only">Close address drawer</span>
+          {% render 'icon', name: 'close', size: 'md' %}
+        </button>
+      </header>
+
+      <form
+        action="{{ routes.search_url }}"
+        method="get"
+        role="search"
+        class="px-7.5 relative flex items-center pb-2 md:px-10"
+        @submit.prevent
+      >
+        <label
+          for="search-input"
+          class="relative -mr-7 h-7 w-7 duration-300 ease-in-out"
+          :class="searchQuery.length ? 'text-sc-title' : 'text-sc-body-primary'"
+        >
+          {% render 'icon', name: 'search' %}
+        </label>
+        <input
+          type="text"
+          id="search-input"
+          class="text-sc-title placeholder:text-sc-body-primary w-full border-none bg-transparent pl-10 text-base outline-none"
+          placeholder="Searching for..."
+          x-model="searchQuery"
+          name="q"
+          autocomplete="off"
+          @input.debounce.500ms="renderSearch()"
+          x-init="setTimeout(() => {$el.focus()}, 300)"
+        >
+        <button
+          class="text-sc-body-primary ml-2 flex shrink-0 items-center duration-300 ease-in-out hover:opacity-70"
+          x-show="searchQuery.length"
+          x-cloak
+          x-transition.opacity.delay.300ms
+          type="button"
+          @click.prevent="searchQuery = ''; renderSearch()"
+        >
+          <span class="sr-only">Clear search query</span>
+          <span class="text-sc-title mr-1 whitespace-nowrap">
+            {{- 'general.search.clear' | t -}}
+          </span>
+
+          {% render 'icon', name: 'close', size: 'md', class: 'text-sc-title/60' %}
+        </button>
+      </form>
+
+      <div class="px-7.5 md:px-10">
+        <hr class="border-sc-subtitle border-b-[2px]">
+      </div>
+
+      {%- if search_menu.links.size > 0 -%}
+        <ul
+          class="scrollbar-hide px-7.5 flex flex-col space-y-5 overflow-y-auto pt-5 md:px-10"
+          x-transition
+          x-cloak
+          x-show="!searchResult && !isLoading"
+          role="list"
+        >
+          {%- for link in search_menu.links -%}
+            <li
+              {% if forloop.last -%}
+                class="pb-5"
+              {%- endif -%}
+            >
+              <a
+                href="{{ link.url }}"
+                aria-label="Redirect to {{ link.title }}"
+                class="btn-link-anim text-sc-title"
+              >
+                <span class="font-primary text-base font-medium">{{ link.title }}</span>
+              </a>
+            </li>
+          {%- endfor -%}
+        </ul>
+      {%- endif -%}
+
+      <div
+        slot="results"
+        x-show="searchResult"
+        x-cloak
+        class="scrollbar-hide px-7.5 md:pt-7.5 flex flex-col overflow-y-auto pt-5 md:px-10"
+      >
+        <nav class="md:pb-7.5 flex shrink-0 flex-wrap items-center gap-y-2 gap-x-5 pb-5">
+          <button
+            type="button"
+            class="text-base font-medium duration-300 ease-in-out"
+            x-show="products.length > 0"
+            @click="activeTab = 'products'"
+            :class="activeTab === 'products' ? 'text-sc-subtitle': 'text-sc-body-primary'"
+          >
+            {{ 'general.search.products' | t }}
+          </button>
+
+          <button
+            type="button"
+            class="text-base font-medium duration-300 ease-in-out"
+            x-show="queries.length > 0"
+            @click="activeTab = 'queries'"
+            :class="activeTab === 'queries' ? 'text-sc-subtitle': 'text-sc-body-primary'"
+          >
+            {{ 'general.search.suggestions' | t }}
+          </button>
+
+          <button
+            type="button"
+            class="text-base font-medium duration-300 ease-in-out"
+            x-show="collections.length > 0"
+            @click="activeTab = 'collections'"
+            :class="activeTab === 'collections' ? 'text-sc-subtitle': 'text-sc-body-primary'"
+          >
+            {{ 'general.search.collections' | t }}
+          </button>
+
+          <button
+            type="button"
+            class="text-base font-medium duration-300 ease-in-out"
+            x-show="articles.length > 0"
+            @click="activeTab = 'articles'"
+            :class="activeTab === 'articles' ? 'text-sc-subtitle': 'text-sc-body-primary'"
+          >
+            {{ 'general.search.posts' | t }}
+          </button>
+
+          <button
+            type="button"
+            class="text-base font-medium duration-300 ease-in-out"
+            x-show="pages.length > 0"
+            @click="activeTab = 'pages'"
+            :class="activeTab === 'pages' ? 'text-sc-subtitle': 'text-sc-body-primary'"
+          >
+            {{ 'general.search.pages' | t }}
+          </button>
+        </nav>
+
+        <div class="scrollbar-hide flex flex-col overflow-y-auto overflow-x-hidden">
+          <template x-if="products.length > 0 && activeTab === 'products'">
+            <template x-for="(product, index) in products" :key="product.id">
+              <a
+                :href="product.url"
+                :aria-label="`Redirect to ${product.title}`"
+                class="animate__animated group mb-4 flex shrink-0 space-x-3 opacity-0 md:mb-5"
+                x-init="setTimeout(() => { $el.classList.add('animate__fadeIn')}, index * 100)"
+              >
+                <div class="shrink-0">
+                  <template x-if="!product.featured_image.url">
+                    <div class="h-[70px] w-[70px] md:h-[90px] md:w-[90px]">
+                      {{ 'collection-1' | placeholder_svg_tag: 'object-cover' }}
+                    </div>
+                  </template>
+
+                  <template x-if="product.featured_image.url">
+                    <img
+                      :src="`${product.featured_image.url}&width=180`"
+                      :alt="product.title"
+                      class="block h-[70px] w-[70px] object-cover md:h-[90px] md:w-[90px]"
+                    >
+                  </template>
+                </div>
+
+                <div class="flex flex-col">
+                  <div class="btn-link-anim flex">
+                    <span
+                      class="text-sc-title line-clamp-1 font-primary text-sm font-medium md:text-base"
+                      x-text="product.title"
+                    ></span>
+                  </div>
+                  <template x-if="product.variants.length">
+                    <div class="mt-1 flex items-center">
+                      <template x-if="product.variants[0].compare_at_price > 0">
+                        <s
+                          class="text-sc-body-primary mr-1 text-xs"
+                          x-text="window.currency(product.variants[0].compare_at_price)"
+                        ></s>
+                      </template>
+                      <p
+                        class="text-sc-body-primary text-xs md:text-sm"
+                        x-text="window.currency(product.variants[0].price)"
+                      ></p>
+                    </div>
+                  </template>
+                  <template x-if="!product.variants.length">
+                    <div class="mt-1 flex items-center">
+                      <template x-if="product.compare_at_price_min > 0">
+                        <s
+                          class="text-sc-body-primary mr-1 text-xs"
+                          x-text="window.currency(product.compare_at_price_min)"
+                        ></s>
+                      </template>
+
+                      <p
+                        class="text-sc-body-primary text-xs md:text-sm"
+                        x-text="window.currency(product.price)"
+                      ></p>
+                    </div>
+                  </template>
+                </div>
+              </a>
+            </template>
+          </template>
+
+          <template x-if="queries.length > 0 && activeTab === 'queries'">
+            <template x-for="(query, index) in queries">
+              <a
+                :href="`${query.url}&type=product`"
+                aria-label="search query"
+                class="animate__animated btn-link-anim group mb-4 w-max max-w-full shrink-0 opacity-0 md:mb-5"
+                x-init="setTimeout(() => { $el.classList.add('animate__fadeIn')}, index * 100)"
+              >
+                <p
+                  class="text-sc-title font-primary text-sm font-medium md:text-base"
+                  x-html="query.styled_text"
+                ></p>
+              </a>
+            </template>
+          </template>
+
+          <template x-if="articles.length > 0 && activeTab === 'articles'">
+            <template x-for="(article, index) in articles">
+              <a
+                :href="article.url"
+                :aria-label="`Redirect to ${article.title}`"
+                class="animate__animated group mb-4 flex shrink-0 space-x-3 opacity-0 md:mb-5"
+                x-init="setTimeout(() => { $el.classList.add('animate__fadeIn')}, index * 100)"
+              >
+                <div class="shrink-0">
+                  <template x-if="!article.featured_image.url">
+                    <div class="h-[70px] w-[70px] md:h-[90px] md:w-[90px]">
+                      {{ 'collection-1' | placeholder_svg_tag: 'object-cover' }}
+                    </div>
+                  </template>
+
+                  <template x-if="article.featured_image.url">
+                    <img
+                      :src="`${article.featured_image.url}&width=180`"
+                      :alt="article.title"
+                      class="block h-[70px] w-[70px] object-cover md:h-[90px] md:w-[90px]"
+                    >
+                  </template>
+                </div>
+
+                <div class="flex flex-col">
+                  <div class="btn-link-anim flex">
+                    <span
+                      class="text-sc-title line-clamp-1 font-primary text-sm font-medium md:text-base"
+                      x-text="article.title"
+                    ></span>
+                  </div>
+                  <p
+                    class="line-clamp-2 text-sc-body-primary mt-1 text-xs md:text-sm"
+                    x-text="article.summary_html.replace(/(<([^>]+)>)/gi, '')"
+                  ></p>
+                  <p
+                    class="text-sc-body-primary mt-2 text-xs"
+                    x-text="new Date(article.published_at).toDateString()"
+                  ></p>
+                </div>
+              </a>
+            </template>
+          </template>
+
+          <template x-if="collections.length > 0 && activeTab === 'collections'">
+            <template x-for="(collection, index) in collections" :key="collection.id">
+              <a
+                :href="collection.url"
+                :aria-label="`Redirect to ${collection.title}`"
+                class="animate__animated group mb-4 flex shrink-0 space-x-3 opacity-0 md:mb-5"
+                x-init="setTimeout(() => { $el.classList.add('animate__fadeIn')}, index * 100)"
+              >
+                <div class="shrink-0">
+                  <template x-if="!collection.featured_image.url">
+                    <div class="h-[70px] w-[70px] md:h-[90px] md:w-[90px]">
+                      {{ 'collection-1' | placeholder_svg_tag: 'object-cover' }}
+                    </div>
+                  </template>
+
+                  <template x-if="collection.featured_image.url">
+                    <img
+                      :src="`${collection.featured_image.url}&width=180`"
+                      :alt="collection.title"
+                      class="block h-[70px] w-[70px] object-cover md:h-[90px] md:w-[90px]"
+                    >
+                  </template>
+                </div>
+
+                <h5 class="btn-link-anim">
+                  <span
+                    class="text-sc-title font-primary text-sm font-medium md:text-base"
+                    x-text="collection.title"
+                  ></span>
+                </h5>
+              </a>
+            </template>
+          </template>
+
+          <template x-if="pages.length > 0 && activeTab === 'pages'">
+            <template x-for="(page, index) in pages" :key="page.handle">
+              <a
+                :href="page.url"
+                :aria-label="`Redirect to ${page.title}`"
+                class="animate__animated btn-link-anim group mb-4 w-max max-w-full shrink-0 space-x-3 opacity-0 md:mb-5"
+                x-init="setTimeout(() => { $el.classList.add('animate__fadeIn')}, index * 100)"
+              >
+                <span
+                  class="text-sc-title font-primary text-sm font-medium md:text-base"
+                  x-text="page.title"
+                ></span>
+              </a>
+            </template>
+          </template>
+
+          <template x-if="!resultsCount && !isLoading">
+            <div
+              class="animate__animated text-sc-title md:pb-7.5 flex h-full flex-col items-center justify-center space-y-3 pb-5 opacity-0"
+              x-init="$el.classList.add('animate__fadeIn')"
+            >
+              {% render 'icon', name: 'serach-not-found', class: 'w-20 h-20' %}
+              <h4 class="text-sc-title font-primary text-center text-xl font-medium">
+                {{ 'general.search.no_results' | t }}
+              </h4>
+            </div>
+          </template>
+        </div>
+      </div>
+
+      {% if search_upsells_enabled and search_upsells.count > 0 %}
+        <div class="pb-7.5 px-7.5 bg-sc-bg-secondary mt-auto pt-4 md:px-10 md:py-10">
+          <!-- UPSELLS TITLE -->
+          {% if search_upsells_title != blank %}
+            <span class="text-sc-title mb-2.5 block text-sm text-sm font-medium md:mb-3.5 md:text-base">
+              {{ search_upsells_title }}
+            </span>
+          {% endif %}
+
+          <div
+            x-ignore
+            ax-load
+            x-data="swiperSlider($el, 'cart_upsells')"
+            class="swiper overflow-visible"
+          >
+            <div class="swiper-wrapper">
+              {% for product in search_upsells %}
+                <div class="swiper-slide h-auto max-w-[280px] md:max-w-[335px] {% if search_upsells.count == 1 %} !w-full !max-w-none {% endif %}">
+                  {% render 'cart-upsell-item', product: product, cart_type: 'full_width', class: '!bg-sc-bg-primary' %}
+                </div>
+              {% endfor %}
+            </div>
+            <div
+              class="{% if search_upsells.count == 1 %} hidden {% endif %} swiper-pagination sw-bullet:bg-sc-subtitle/30 sw-bullet-active:bg-sc-subtitle sw-bullet:w-2 sw-bullet:h-2 sw-bullet:!m-[0_4px_0_0] mt-3 justify-start"
+            ></div>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </template>
+</template>
+
+{% schema %}
+{
+  "name": "Search drawer",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Featured links",
+      "info": "Promote collections, products or important pages when search terms is empty."
+    },
+    {
+      "type": "link_list",
+      "id": "search_menu",
+      "label": "Menu",
+      "info": "This menu won't show dropdown items."
+    },
+    {
+      "type": "checkbox",
+      "id": "search_upsells_enabled",
+      "label": "Upsells enabled ?",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "search_upsells_title",
+      "label": "Upsells title",
+      "default": "Trending this month"
+    },
+    {
+      "type": "product_list",
+      "id": "search_upsells",
+      "label": "Upsell products",
+      "limit": 4
+    }
+  ]
+}
+{% endschema %}
