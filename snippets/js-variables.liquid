@@ -1,0 +1,88 @@
+<script>
+  window.addEventListener('DOMContentLoaded', () => {
+    const isReloaded = (window.performance.navigation && window.performance.navigation.type === 1) || window.performance.getEntriesByType('navigation').map((nav) => nav.type).includes('reload');
+
+    if ('animate' in document.documentElement && window.matchMedia('(prefers-reduced-motion: no-preference)').matches && document.referrer.includes(location.host) && !isReloaded) {
+      document.body.animate({opacity: [0, 1]}, {duration: 115, fill: 'forwards'});
+    }
+  });
+
+  window.addEventListener('pageshow', (event) => {
+    document.body.classList.remove('opacity-0');
+
+    if (event.persisted) {
+      document.body.animate({opacity: [0, 1]}, {duration: 0, fill: 'forwards'});
+    }
+  });
+
+  window.themeVariables = {
+    settings: {
+      moneyFormat: {{ shop.money_format | json }},
+      moneyWithCurrencyFormat: {{ shop.money_with_currency_format | json }},
+      currencyCodeEnabled: {{ settings.currency_code_enabled | json }},
+    },
+  };
+
+  var handleize = (str) =>
+    str
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, "")
+      .replace(/[\s_-]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+
+
+  var currency = (cents, format) => {
+    if (typeof cents == "string") {
+      cents = cents.replace(".", "");
+    }
+    let value = "";
+    const placeholderRegex = /\{\{\s*(\w+)\s*\}\}/;
+    const formatString = format || window.themeVariables.settings.moneyFormat;
+
+    function defaultOption(opt, def) {
+      return typeof opt == "undefined" ? def : opt;
+    }
+
+    function formatWithDelimiters(number, precision, thousands, decimal) {
+      precision = defaultOption(precision, 2);
+      thousands = defaultOption(thousands, ",");
+      decimal = defaultOption(decimal, ".");
+
+      if (isNaN(number) || number == null) {
+        return 0;
+      }
+
+      number = (number / 100.0).toFixed(precision);
+
+      var parts = number.split("."),
+        dollars = parts[0].replace(
+          /(\d)(?=(\d\d\d)+(?!\d))/g,
+          "$1" + thousands
+        ),
+        cents = parts[1] ? decimal + parts[1] : "";
+
+      return dollars + cents;
+    }
+
+    switch (formatString.match(placeholderRegex)[1]) {
+      case "amount":
+        value = formatWithDelimiters(cents, 2);
+        break;
+      case "amount_no_decimals":
+        value = formatWithDelimiters(cents, 0);
+        break;
+      case "amount_with_comma_separator":
+        value = formatWithDelimiters(cents, 2, ".", ",");
+        break;
+      case "amount_no_decimals_with_comma_separator":
+        value = formatWithDelimiters(cents, 0, ".", ",");
+        break;
+    }
+
+    return formatString.replace(placeholderRegex, value);
+  };
+
+  window.currency = currency;
+  window.handleize = handleize;
+</script>
