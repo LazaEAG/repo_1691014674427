@@ -1,0 +1,402 @@
+<!-- image-banner.liquid -->
+{% liquid
+  assign section_anchor_id = section.settings.section_anchor_id | handleize
+  assign color_scheme = section.settings.color_scheme
+
+  assign image = section.settings.image
+  assign image_tab = section.settings.image_tab | default: image
+  assign image_mob = section.settings.image_mob | default: image_tab
+  assign image_size = section.settings.image_size
+
+  assign layout = section.settings.layout
+  assign headline = section.settings.headline
+  assign subtitle = section.settings.subtitle
+
+  assign button_url = section.settings.button_url
+  assign button_text = section.settings.button_text
+  assign button_type = section.settings.button_type
+  assign button_secondary_url = section.settings.button_secondary_url
+  assign button_secondary_text = section.settings.button_secondary_text
+  assign button_secondary_type = section.settings.button_secondary_type
+
+  assign content_align = section.settings.content_align
+  assign desk_content_align = section.settings.desk_content_align
+
+  case image_size
+    when 'small'
+      assign img_size = 'min-h-[300px] md:min-h-[550px]'
+    when 'medium'
+      assign img_size = 'min-h-[450px] md:min-h-[600px]'
+    when 'large'
+      assign img_size = 'min-h-[550px] md:min-h-[700px]'
+  endcase
+%}
+
+<div
+  id="{{ section_anchor_id }}"
+  data-section-id="{{ section.id }}"
+  class="color-scheme-{{ color_scheme }} bg-sc-bg-primary bg-primary-gradient {% if layout contains 'container' %}smD:py-10{% endif %}"
+>
+  <div class="relative flex h-full w-full overflow-hidden {{ img_size }} {% if layout contains 'container' %}smD:container{% endif %}">
+    {% assign img_class = 'absolute left-0 top-0 h-full w-full object-cover object-center' %}
+    {% if image %}
+      {% if layout contains 'container' %}
+        {% assign img_class = img_class | append: ' smD:container' %}
+      {% endif %}
+      <picture>
+        <source srcset="{{ image | image_url: width: 2000 }}" media="(min-width: 1020px)">
+        <source srcset="{{ image_tab | image_url: width: 1150 }}" media="(min-width: 600px)">
+        <source srcset="{{ image_mob | image_url: width: 600 }}" media="(max-width: 600px)">
+        <img
+          class="{{ img_class }}"
+          src="{{ image | image_url: width: 2000 }}"
+          alt="{{ image.alt | escape }}"
+          width="2000"
+          height="2000"
+        >
+      </picture>
+    {% else %}
+      {{ 'lifestyle-2' | placeholder_svg_tag: img_class }}
+    {% endif %}
+
+    <div class="px-7.5 relative flex w-full items-center justify-center py-20 {% if layout contains '_bg' or layout contains 'container' %} 2k:max-w-[1060px] mx-auto max-w-[940px] {% endif %}">
+      <div
+        class="
+          content-block w-full flex flex-col {% if layout contains '_bg' %} px-5 md:px-10 py-12.5 bg-sc-bg-secondary bg-secondary-gradient backdrop-blur-sm{% elsif layout contains 'container' %}md:px-10 md:py-12.5{% else %}max-w-lg 2xl:max-w-5xl {% endif %}
+          {% if content_align == "left" %}text-left{% elsif content_align == "center" %}text-center{% else %}text-right{% endif %}
+          {% if desk_content_align == "left" %}md:text-left{% elsif desk_content_align == "center" %}md:text-center{% else %}md:text-right{% endif %}
+        "
+      >
+        {% if headline != blank or subtitle != blank %}
+          <div class="overflow-hidden {% if layout contains '_bg' %}space-y-3 px-5 md:px-0{% elsif layout contains 'container' %}md:space-y-3 space-y-1 2k:py-14{% else %} 2k:py-14 space-y-1 {% endif %} 2k:space-y-5">
+            {% if headline != blank %}
+              <h2
+                class="animate__animated font-primary text-sc-title smD:text-6xl xs:text-4xl text-3xl font-medium opacity-0 md:text-5xl"
+                x-intersect="$el.classList.add('animate__fadeInUp')"
+              >
+                {{ headline }}
+              </h2>
+            {% endif %}
+
+            {% if subtitle != blank %}
+              <div
+                class="animate__animated eag-delay-500ms rte text-sc-subtitle 2k:text-2xl text-lg opacity-0"
+                x-intersect="$el.classList.add('animate__fadeInUp')"
+              >
+                {{ subtitle }}
+              </div>
+            {% endif %}
+          </div>
+        {% endif %}
+
+        {% if button_text != blank or button_secondary_text != blank %}
+          <div
+            class="
+              flex xs:items-center flex-wrap gap-y-4 gap-x-5 mt-10
+              {% if content_align == "left" %}items-start justify-start{% elsif content_align == "center" %}items-center justify-center{% else %}items-end justify-end{% endif %}
+              {% if desk_content_align == "left" %}md:justify-start{% elsif desk_content_align == "center" %}md:justify-center{% else %}md:justify-end{% endif %}
+            "
+          >
+            {% if button_text != blank %}
+              <a
+                href="{{ button_url }}"
+                class="{% render 'btn-class', btn: button_type %}"
+                aria-label="{{ button_text }}"
+              >
+                <span>
+                  {{- button_text -}}
+                </span>
+              </a>
+            {% endif %}
+
+            {% if button_secondary_text != blank %}
+              <a
+                href="{{ button_secondary_url }}"
+                class="{% render 'btn-class', btn: button_secondary_type %}"
+                aria-label="{{ button_secondary_text }}"
+              >
+                <span>{{- button_secondary_text -}}</span>
+              </a>
+            {% endif %}
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Image banner",
+  "tag": "section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "section_anchor_id",
+      "label": "Section anchor id",
+      "default": "Image banner"
+    },
+    {
+      "type": "header",
+      "content": "Image settings"
+    },
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "Desktop image"
+    },
+    {
+      "type": "image_picker",
+      "id": "image_tab",
+      "label": "Tablet image (optional)"
+    },
+    {
+      "type": "image_picker",
+      "id": "image_mob",
+      "label": "Mobile image (optional)"
+    },
+    {
+      "type": "select",
+      "id": "image_size",
+      "label": "Image height",
+      "options": [
+        {
+          "value": "small",
+          "label": "Small"
+        },
+        {
+          "value": "medium",
+          "label": "Medium"
+        },
+        {
+          "value": "large",
+          "label": "Large"
+        }
+      ],
+      "default": "large",
+      "info": "aspect ratio 3:2"
+    },
+    {
+      "type": "select",
+      "id": "layout",
+      "label": "Layout type",
+      "options": [
+        {
+          "value": "full",
+          "label": "Full image"
+        },
+        {
+          "value": "full_bg",
+          "label": "Full image with background"
+        },
+        {
+          "value": "container",
+          "label": "Container"
+        },
+        {
+          "value": "container_bg",
+          "label": "Container with background"
+        }
+      ],
+      "default": "full_bg"
+    },
+    {
+      "type": "header",
+      "content": "Content settings"
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "Section colors"
+    },
+    {
+      "type": "text",
+      "id": "headline",
+      "label": "Section headline",
+      "default": "Lorem ipsum is place holder text"
+    },
+    {
+      "type": "richtext",
+      "id": "subtitle",
+      "label": "Section subtitle",
+      "default": "<p>Lorem ipsum is place holder text</p>"
+    },
+    {
+      "type": "header",
+      "content": "First button settings"
+    },
+    {
+      "type": "url",
+      "id": "button_url",
+      "label": "Section button url"
+    },
+    {
+      "type": "text",
+      "id": "button_text",
+      "label": "Section button text",
+      "default": "Button text"
+    },
+    {
+      "type": "select",
+      "id": "button_type",
+      "label": "Section button type",
+      "options": [
+        {
+          "value": "btn_primary_main_fill",
+          "label": "main primary fill"
+        },
+        {
+          "value": "btn_secondary_main_fill",
+          "label": "main secondary fill"
+        },
+        {
+          "value": "btn_primary_main_outline",
+          "label": "main primary outline"
+        },
+        {
+          "value": "btn_secondary_main_outline",
+          "label": "main secondary outline"
+        },
+        {
+          "value": "btn_primary_pill_fill",
+          "label": "pill primary fill"
+        },
+        {
+          "value": "btn_secondary_pill_fill",
+          "label": "pill secondary fill"
+        },
+        {
+          "value": "btn_primary_pill_outline",
+          "label": "pill primary outline"
+        },
+        {
+          "value": "btn_secondary_pill_outline",
+          "label": "pill secondary outline"
+        },
+        {
+          "value": "link_primary",
+          "label": "Link primary"
+        },
+        {
+          "value": "link_secondary",
+          "label": "Link secondary"
+        }
+      ],
+      "default": "btn_primary_pill_fill"
+    },
+    {
+      "type": "header",
+      "content": "Second button settings"
+    },
+    {
+      "type": "url",
+      "id": "button_secondary_url",
+      "label": "Section secondary button url"
+    },
+    {
+      "type": "text",
+      "id": "button_secondary_text",
+      "label": "Section secondary button text",
+      "default": "Button text"
+    },
+    {
+      "type": "select",
+      "id": "button_secondary_type",
+      "label": "Section secondary button type",
+      "options": [
+        {
+          "value": "btn_primary_main_fill",
+          "label": "main primary fill"
+        },
+        {
+          "value": "btn_secondary_main_fill",
+          "label": "main secondary fill"
+        },
+        {
+          "value": "btn_primary_main_outline",
+          "label": "main primary outline"
+        },
+        {
+          "value": "btn_secondary_main_outline",
+          "label": "main secondary outline"
+        },
+        {
+          "value": "btn_primary_pill_fill",
+          "label": "pill primary fill"
+        },
+        {
+          "value": "btn_secondary_pill_fill",
+          "label": "pill secondary fill"
+        },
+        {
+          "value": "btn_primary_pill_outline",
+          "label": "pill primary outline"
+        },
+        {
+          "value": "btn_secondary_pill_outline",
+          "label": "pill secondary outline"
+        },
+        {
+          "value": "link_primary",
+          "label": "Link primary"
+        },
+        {
+          "value": "link_secondary",
+          "label": "Link secondary"
+        }
+      ],
+      "default": "btn_primary_pill_fill"
+    },
+    {
+      "type": "header",
+      "content": "Second content align"
+    },
+    {
+      "type": "select",
+      "id": "content_align",
+      "label": "Mobile content align",
+      "options": [
+        {
+          "value": "left",
+          "label": "Left"
+        },
+        {
+          "value": "center",
+          "label": "Center"
+        },
+        {
+          "value": "right",
+          "label": "Right"
+        }
+      ],
+      "default": "center"
+    },
+    {
+      "type": "select",
+      "id": "desk_content_align",
+      "label": "Desktop content align",
+      "options": [
+        {
+          "value": "left",
+          "label": "Left"
+        },
+        {
+          "value": "center",
+          "label": "Center"
+        },
+        {
+          "value": "right",
+          "label": "Right"
+        }
+      ],
+      "default": "center"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Image banner",
+      "category": "Repeatable"
+    }
+  ]
+}
+{% endschema %}
