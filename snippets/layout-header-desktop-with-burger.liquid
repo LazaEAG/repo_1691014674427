@@ -1,0 +1,94 @@
+{% liquid
+  assign shop_all_btn_text = section.settings.shop_all_btn_text
+  assign shop_all_btn_url = section.settings.shop_all_btn_url
+  assign shop_all_btn = section.settings.shop_all_btn
+%}
+
+<!-- HEADER DESKTOP VIEW, LAYOUT WITH BURGER START -->
+<div class="relative hidden h-full w-full items-center justify-between py-3 xl:flex">
+  <!-- BURGER/SEARCH -->
+  <div class="text-sc-title flex w-1/3 items-center justify-start">
+    <button
+      type="button"
+      aria-controls="header-sidebar-menu"
+      @click="$store.mobileMenu.show()"
+      :aria-expanded="$store.mobileMenu.visible"
+      class="duration-200 hover:opacity-70"
+    >
+      <span class="sr-only">Open navigation menu</span>
+      {% render 'icon', name: 'burger' %}
+    </button>
+  </div>
+  <!-- LOGO -->
+  <a class="flex w-1/3 justify-center" href="{{ routes.root_url }}">
+    {% if settings.logo_dark != blank and settings.logo_light != blank %}
+      <span class="sr-only">{{ shop.name }}</span>
+      <div class="shop-logo">
+        <img
+          src="{{ settings.logo_dark | img_url: 'master' }}"
+          alt="{{ shop.name | append: ' logo' }}"
+          class="w-full object-cover"
+        >
+      </div>
+    {% else %}
+      <span class="text-center text-xl uppercase duration-200 hover:opacity-70">{{ shop.name }}</span>
+    {% endif %}
+  </a>
+
+  <div class="text-sc-title flex w-1/3 items-center justify-end">
+    {% unless request.page_type contains 'customers/' %}
+      <a
+        class="block duration-200 hover:opacity-70"
+        href="{% if customer %}{{ routes.account_url }}{% else %}{{ routes.account_login_url }}{% endif %}"
+        {% unless customer %}
+          {% if login_layout == 'drawer' %}
+            aria-controls="login-drawer"
+            :aria-expanded="$store.drawer.visible && $store.drawer.id === 'login-drawer'"
+            @click.prevent="$store.drawer.show({ id: 'login-drawer' })"
+          {% endif %}
+        {% endunless %}
+      >
+        <span class="sr-only">Login to your account</span>
+        {% render 'icon', name: 'account' %}
+      </a>
+    {% endunless %}
+
+    {% unless request.page_type == 'search' %}
+      <a
+        class="ml-5 block duration-200 hover:opacity-70"
+        href="{{ routes.search_url }}"
+        aria-controls="search-drawer"
+        :aria-expanded="$store.drawer.visible && $store.drawer.id === 'search'"
+        @click.prevent="$store.drawer.show({ id: 'search' })"
+      >
+        <span class="sr-only">Open search</span>
+        {% render 'icon', name: 'search' %}
+      </a>
+    {% endunless %}
+
+    <a
+      href="{{ shop_all_btn_url }}"
+      class="ml-5 {% if cart.item_count != 0 %}hidden{% endif %} {% render 'btn-class', btn: shop_all_btn %}"
+      :class="$store['cart'].obj.item_count === 0 ? '!flex' : '!hidden'"
+    >
+      <span>{{ shop_all_btn_text }}</span>
+    </a>
+
+    <button
+      type="button"
+      class="duration-200 hover:opacity-70 ml-5 relative {% if cart.item_count == 0 %}hidden{% endif %}"
+      aria-controls="cart-drawer"
+      :aria-expanded="$store.cart.visible"
+      @click="$store['cart'].visible ? $store['cart'].hide() : $store['cart'].show()"
+      :class="$store['cart'].obj.item_count > 0 ? '!flex' : '!hidden'"
+    >
+      <span class="sr-only">Open cart drawer</span>
+      {% render 'icon', name: 'cart', class: 'w-[28px] h-[28px]' %}
+      <span
+        x-text="$store['cart'].obj.item_count"
+        class="absolute left-1/2 bottom-1 -translate-x-1/2 text-xs font-medium text-white"
+      ></span>
+    </button>
+  </div>
+</div>
+<!-- HEADER DESKTOP VIEW, LAYOUT WITH BURGER END -->
