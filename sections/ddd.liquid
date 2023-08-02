@@ -1,0 +1,283 @@
+<!-- thumbs -->
+<div class="mr-5 hidden shrink-0 flex-col items-center lg:flex" x-show="images.length > 1">
+  <div
+    :style="{maxHeight: `${thumbsSliderMaxWidth}px`}"
+    class="swiper relative m-0 max-w-max"
+    x-ref="thumb-slider-js"
+  >
+    <div class="swiper-wrapper">
+      <template x-for="image in images">
+        <div
+          class="swiper-slide sw-thumb-active:border-sc-subtitle h-auto max-w-[30px] max-w-[40px] border"
+        >
+          <div
+            class="w-full"
+          >
+            <template x-if="image.media_type === 'image'">
+              <img
+                :src="image.src"
+                :alt="image.alt"
+                class="h-full w-full object-cover"
+              >
+            </template>
+            <template x-if="image.media_type === 'video'">
+              <div></div>
+            </template>
+          </div>
+        </div>
+      </template>
+    </div>
+  </div>
+  <button
+    class="mt-3"
+    x-show="images.length > slidesPerView"
+    @click="thumbsSlider.slideNext()"
+    :class="isBeginning ? 'block text-sc-btn-primary-bg-default/50' : 'hidden text-sc-btn-primary-bg-default'"
+  >
+    {% render 'icon', name: 'slider-arrow', class: 'w-7.5 h-7.5 -rotate-90' %}
+  </button>
+
+  <button
+    class="mt-3"
+    x-show="images.length > slidesPerView"
+    @click="thumbsSlider.slidePrev()"
+    :class="isEnd ? 'block text-sc-btn-primary-bg-default/50' : 'hidden text-sc-btn-primary-bg-default'"
+  >
+    {% render 'icon', name: 'slider-arrow', class: 'w-7.5 h-7.5 rotate-90' %}
+  </button>
+</div>
+
+<div class="flex max-w-max flex-col">
+  <div class="swiper w-full" x-ref="main-slider-js">
+    <div class="swiper-wrapper">
+      <template x-for="image in images">
+        <div class="swiper-slide w-full">
+          <div class="h-full w-full">
+            <template x-if="image.media_type === 'image'">
+              <img
+                :src="image.src"
+                :alt="image.alt"
+                class="block h-full w-full object-cover object-center"
+              >
+            </template>
+            <template x-if="image.media_type === 'video'">
+              <div></div>
+            </template>
+          </div>
+        </div>
+      </template>
+    </div>
+    <div
+      class="swiper-pagination sw-bullet:bg-sc-subtitle/30 sw-bullet-active:bg-sc-subtitle sw-bullet:w-4 sw-bullet:h-4 sw-bullet:!m-[0_4px_0_4px] absolute lg:hidden"
+    ></div>
+  </div>
+  {% if featured_icons != blank %}
+    <div class="mt-12.5 flex justify-between gap-5 pb-20">
+      {% for block in featured_icons %}
+        {% assign icon = block.settings.icon %}
+        {% assign text = block.settings.text %}
+        {% if icon != blank %}
+          <div class="flex flex-col items-center gap-2 text-center">
+            <div class="h-[35px] w-[35px]">
+              {{
+                icon
+                | image_url: width: 315
+                | image_tag: loading: 'lazy', alt: icon.alt, class: 'block object-contain object-center'
+              }}
+            </div>
+            <p class="text-sc-body-primary text-xs font-medium">{{ text }}</p>
+          </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+  {% endif %}
+</div>
+
+<div class="px-7.5 pb-15 mx-auto max-w-[485px] pt-5 md:px-0 md:pt-10 lg:m-0 lg:w-1/2 lg:max-w-[470px] lg:p-0">
+  {% for block in section.blocks %}
+    {% case block.type %}
+      {% when '@app' %}
+        <div class="">{% render block %}</div>
+      {% when 'product_title' %}
+        <h1 class="font-primary text-sc-title mb-4 text-3xl font-medium md:text-4xl">
+          {{ product.title }}
+        </h1>
+      {% when 'product_description' %}
+        {% if product.description != blank %}
+          <div class="mb-7.5 text-sc-body-primary line-clamp-3 mt-5 text-base">
+            {{ product.description | strip_html }}
+          </div>
+        {% endif %}
+      {% when 'product_form' %}
+        {% form 'product', product, class: 'mb-7.5' %}
+          <div class="gap-7.5 flex flex-col">
+            {% unless product.has_only_default_variant %}
+              <template x-for="(option, index) in productOptions">
+                <template x-if="window.colorOptionNames.includes(option.name)">
+                  <div class="order-[-1] flex items-center justify-between">
+                    <div class="text-13-px space-x-1">
+                      <span x-text="`${option.name}:`" class="text-sc-title"></span>
+                      <span x-text="selectedVariant[`option${option.position}`]" class="text-sc-subtitle"></span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                      <template x-for="value in option.values">
+                        <button
+                          :aria-label="value"
+                          class="option-color"
+                          :class="
+                            {
+                              active: selectedVariant.options.includes(value),
+                              unavailable: !product.variants.some(variant => variant.available && variant.options[index] === value) && index === 0 ||
+                                !product.variants.some(variant => variant.available && variant.option1 === selectedVariant.option1 && variant.options[index] === value) && index === 1 ||
+                                !product.variants.some(variant => variant.available && variant.option1 === selectedVariant.option1 && variant.option2 === selectedVariant.option2 && variant.options[index] === value) && index === 2
+                            }
+                          "
+                          type="button"
+                          @click="
+                            changeVariant({
+                              name: option.name,
+                            }, value)
+                          "
+                        >
+                          <span class="sr-only absolute" x-text="`Color swatch ${value}`"></span>
+                          <div
+                            class="swatch"
+                            :data-color-swatch="window.handleize(value)"
+                          ></div>
+                        </button>
+                      </template>
+                    </div>
+                  </div>
+                </template>
+              </template>
+              <template x-for="(option, index) in productOptions">
+                <template x-if="!window.colorOptionNames.includes(option.name)">
+                  <div class="flex flex-col items-start lg:flex-row lg:justify-between">
+                    <div class="text-13-px mb-2.5 shrink-0 space-x-1">
+                      <span x-text="`${option.name}:`" class="text-sc-title"></span>
+                      <span x-text="selectedVariant[`option${option.position}`]" class="text-sc-subtitle"></span>
+                    </div>
+
+                    <div class="flex flex-wrap gap-2.5">
+                      <template x-for="value in option.values">
+                        <button
+                          type="button"
+                          @click="
+                            changeVariant({
+                              name: option.name,
+                            }, value)
+                          "
+                          class="option-default max-w-max rounded-none"
+                          :class="
+                            {
+                              active: selectedVariant.options.includes(value),
+                              unavailable: !product.variants.some(variant => variant.available && variant.options[index] === value) && index === 0 ||
+                                !product.variants.some(variant => variant.available && variant.option1 === selectedVariant.option1 && variant.options[index] === value) && index === 1 ||
+                                !product.variants.some(variant => variant.available && variant.option1 === selectedVariant.option1 && variant.option2 === selectedVariant.option2 && variant.options[index] === value) && index === 2
+                            }
+                          "
+                        >
+                          <span x-text="value"></span>
+                        </button>
+                      </template>
+                    </div>
+                  </div>
+                </template>
+              </template>
+            {% endunless %}
+
+            <div class="flex flex-col">
+              <span class="text-sc-title flex items-center">
+                <s
+                  x-show="selectedVariant.compare_at_price && selectedVariant.compare_at_price > selectedVariant.price"
+                  x-text="window.currency(selectedVariant.compare_at_price)"
+                  class="mr-1 text-sm"
+                ></s>
+                <span
+                  x-text="window.currency(selectedVariant.price)"
+                  class="text-lg font-medium"
+                ></span>
+              </span>
+              <!-- payment_terms -->
+              <div class="">
+                {{ form | payment_terms }}
+              </div>
+              <button
+                type="button"
+                class="{% render 'btn-class', btn: 'btn_primary_pill_fill' %} mt-5 min-h-[50px] w-full"
+                @click.debounce.500ms="addToCart"
+              >
+                Add To Cart
+              </button>
+            </div>
+          </div>
+        {% endform %}
+      {% when 'product_icons_with_text' %}
+        {% if icons_with_text.count > 0 %}
+          <div class="mb-7.5 flex justify-between md:justify-start md:gap-x-2.5">
+            {% for icon_with_text in icons_with_text %}
+              {% assign icon = icon_with_text.icon %}
+              {% assign text = icon_with_text.text %}
+              <div class="flex flex-col items-center">
+                <div class="mb-2 max-w-[40px]">
+                  {{
+                    icon
+                    | image_url: width: 1000
+                    | image_tag: alt: icon.alt, loading: 'lazy', class: 'w-full h-full object-contain'
+                  }}
+                </div>
+                <span class="text-sc-body-primary text-center text-xs">{{ text }}</span>
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% when 'product_accordion' %}
+        <div
+          x-data="{active: 1}"
+          class="mb-7.5 space-y-5"
+        >
+          {% if description != blank %}
+            {% assign title = 'product.info_title.description' | t %}
+            {% render 'product-info-accordion-item',
+              active: 1,
+              title: title,
+              content: description,
+              class: 'border-y border-gray-200 py-5'
+            %}
+          {% endif %}
+          {% if how_to_use != blank %}
+            {% assign title = 'product.info_title.how_to_use' | t %}
+            {% render 'product-info-accordion-item', active: 2, title: title, content: how_to_use %}
+          {% endif %}
+
+          {% if ingredients != blank %}
+            {% assign title = 'product.info_title.ingredients' | t %}
+            {% render 'product-info-accordion-item', active: 3, title: title, content: ingredients %}
+          {% endif %}
+
+          {% if faq.count > 0 %}
+            {% assign title = 'product.info_title.faq' | t %}
+            {% render 'product-info-accordion-item', active: 4, title: title, content: faq_content %}
+          {% endif %}
+        </div>
+      {% when 'product_upsells' %}
+        <div class="mb-7.5">
+          <span class="text-sc-title mb-3 block text-lg font-medium">
+            {{ 'product.info_title.upsells' | t }}
+          </span>
+          <div
+            class="product-recommendations space-y-5"
+            x-init="loadRecommendations('{{ routes.product_recommendations_url }}?section_id={{ section.id }}&product_id={{ product.id }}&intent=related')"
+          >
+            {%- if recommendations.performed? and recommendations.products_count > 0 -%}
+              {%- for product in recommendations.products -%}
+                {% if forloop.index < 4 %}
+                  {% render 'product-info-upsell-item', product: product %}
+                {% endif %}
+              {% endfor %}
+            {% endif %}
+          </div>
+        </div>
+    {% endcase %}
+  {% endfor %}
+</div>
