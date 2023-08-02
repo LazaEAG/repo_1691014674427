@@ -1,0 +1,89 @@
+{% liquid
+  assign color_scheme = section.settings.color_scheme
+
+  if request.page_type contains 'register'
+    assign init_tab = 'register'
+  elsif request.page_type contains 'activate_account'
+    assign init_tab = 'activate_account'
+  elsif request.page_type contains 'reset_password'
+    assign init_tab = 'reset_password'
+  endif
+%}
+
+<div
+  x-data="account()"
+  {% if init_tab %}
+    x-init="login_tab = '{{ init_tab }}'"
+  {% endif %}
+  class="color-scheme-{{- color_scheme }} bg-sc-bg-primary bg-primary-gradient py-10 md:py-20"
+>
+  <h1 class="sr-only">
+    {{ page_title }}
+  </h1>
+
+  <div class="hidden">
+    {% form 'recover_customer_password' %}
+      {% if form.errors %}
+        {% capture error_text %}
+          {{ form.errors | default_errors }}
+        {% endcapture %}
+
+        {%- render 'layout-message', status: 'error', content: error_text -%}
+      {% endif %}
+
+      {% if form.posted_successfully? %}
+        {% assign translation_response = 'customer.recover_password.success' | t %}
+        {%- render 'layout-message', status: 'success', content: translation_response -%}
+      {% endif %}
+    {% endform %}
+    {% form 'customer_login' %}
+      {% if form.errors %}
+        {% capture error_text %}
+          {{ form.errors | default_errors }}
+        {% endcapture %}
+
+        {%- render 'layout-message', status: 'error', content: error_text -%}
+      {% endif %}
+    {% endform %}
+  </div>
+  <div class="bg-sc-bg-secondary bg-secondary-gradient md:rounded-r-block mx-auto flex flex-col items-center py-8 px-5 md:max-w-2xl md:py-10">
+    <template x-if="login_tab == 'login'">
+      <div class="text-sc-title mx-auto mt-5 w-full max-w-md text-center">
+        {% render 'layout-account-login' %}
+      </div>
+    </template>
+    <template x-if="login_tab == 'register'">
+      <div class="text-sc-title mx-auto mt-5 w-full max-w-md text-center">
+        {% render 'layout-account-register' %}
+      </div>
+    </template>
+    <template x-if="login_tab == 'forgot_password'">
+      <div class="text-sc-title mx-auto mt-5 w-full max-w-md text-center">
+        {% render 'layout-account-forgot-password' %}
+      </div>
+    </template>
+    <template x-if="login_tab == 'activate_account'">
+      <div class="text-sc-title mx-auto mt-5 w-full max-w-md text-center">
+        {% render 'layout-account-activate-account' %}
+      </div>
+    </template>
+    <template x-if="login_tab == 'reset_password'">
+      <div class="text-sc-title mx-auto mt-5 w-full max-w-md text-center">
+        {% render 'layout-account-reset-password' %}
+      </div>
+    </template>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Customer order",
+  "settings": [
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "Section colors"
+    }
+  ]
+}
+{% endschema %}
