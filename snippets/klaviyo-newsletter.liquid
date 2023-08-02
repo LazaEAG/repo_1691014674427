@@ -1,0 +1,63 @@
+{%- comment -%}
+  ----------------------------------------------------------------------------------------------------------------------
+  KLAVIYO ARTICLE NEWSLETTER COMPONENT
+  ----------------------------------------------------------------------------------------------------------------------
+
+  * title
+  * text
+  * list_id: KLAVIYO list id
+  * thanks_text
+  * placeholder
+  * subtitle
+  * class
+{%- endcomment -%}
+
+<article
+  class="animate__animated p-7.5 bg-secondary-gradient bg-sc-bg-secondary md:py-12.5 space-y-5 opacity-0 {{ class }}"
+  x-intersect="$el.classList.add('animate__fadeIn')"
+>
+  {% if title or text %}
+    <div class="smD:max-w-xl mx-auto max-w-md">
+      {% if title %}
+        <h3 class="font-primary smD:text-5xl text-sc-title mb-2 text-center text-4xl font-medium">{{- title -}}</h3>
+      {% endif %}
+      {% if text %}
+        <div class="rte text-sc-body-primary child-a:text-sc-link-primary-text-default text-center">{{- text -}}</div>
+      {% endif %}
+    </div>
+  {% endif %}
+  <form
+    x-data="klaviyoForm"
+    action="/"
+    @submit.prevent="sendKlaviyo('{{ list_id }}')"
+    class="smD:max-w-xl smD:px-18 2k:px-10 relative mx-auto max-w-md"
+  >
+    <div x-cloak x-show="submit" class="font-primary text-center text-xl">
+      {{ thanks_text }}
+    </div>
+
+    <div x-cloak x-show="!submit" class="mb-5">
+      {%- render 'input',
+        name: 'email',
+        label: placeholder,
+        type: 'text',
+        required: true,
+        autocomplete: 'email',
+        enterkeyhint: 'send',
+        self_submit: true,
+        input_height: 54,
+        input_bg: 'bg-sc-bg-primary'
+      -%}
+    </div>
+
+    <button type="submit" class="{% render 'btn-class', btn: 'btn_primary_pill_fill' %} w-full">
+      {{- 'contact.form.send' | t -}}
+    </button>
+
+    {% if subtitle %}
+      <div class="rte text-sc-body-primary child-a:text-sc-link-primary-text-default mt-3 text-center text-xs ">
+        {{- subtitle -}}
+      </div>
+    {% endif %}
+  </form>
+</article>
