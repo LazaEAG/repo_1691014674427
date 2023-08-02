@@ -1,0 +1,366 @@
+<!-- multicolumn.liquid -->
+{% liquid
+  assign section_anchor_id = section.settings.section_anchor_id | handleize
+  assign color_scheme = section.settings.color_scheme
+  assign layout = section.settings.layout
+
+  assign blocks = section.blocks
+
+  assign pt_mob = section.settings.pt_mob
+  assign pb_mob = section.settings.pb_mob
+  assign pt_tab = section.settings.pt_tab
+  assign pb_tab = section.settings.pb_tab
+  assign pt_desk = section.settings.pt_desk
+  assign pb_desk = section.settings.pb_desk
+%}
+
+{% render 'section-paddings',
+  section_id: section.id,
+  pt_mob: pt_mob,
+  pb_mob: pb_mob,
+  pt_tab: pt_tab,
+  pb_tab: pb_tab,
+  pt_desk: pt_desk,
+  pb_desk: pb_desk
+%}
+
+<div
+  id="{{ section_anchor_id }}"
+  data-section-id="{{ section.id }}"
+  class="color-scheme-{{ color_scheme }} bg-sc-bg-primary bg-primary-gradient overflow-hidden"
+>
+  {% if layout == 'grid' %}
+    <div
+      class="
+        animate__animated opacity-0 container grid grid-cols-1 gap-x-7.5 2xl:gap-7.5 gap-y-10
+        {% if blocks != blank and blocks.size < 3 %} md:grid-cols-2{% elsif blocks.size == 4 %}md:grid-cols-3 2xl:grid-cols-4{% else %} md:grid-cols-3{% endif %}
+      "
+      x-intersect="$el.classList.add('animate__fadeIn')"
+    >
+      {% if blocks.size == 0 %}
+        {% for i in (1..3) %}
+          <div class="group flex flex-col items-center">
+            <a
+              href="#"
+              class="bg-sc-bg-secondary image-overflow-hidden bg-secondary-gradient smD:pb-[400px] 4k:pb-[500px] relative mb-5 w-full pb-[350px]"
+            >
+              {{
+                'image'
+                | placeholder_svg_tag: 'absolute top-0 left-0 object-cover w-full h-full group-hover:scale-105 duration-500'
+              }}
+            </a>
+            <h3 class="text-sc-title font-primary mb-3 text-center text-2xl font-medium">Lorem ipsum</h3>
+            <div class="text-sc-body-primary rte text-center text-base">
+              <p>
+                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et
+                dolore.
+              </p>
+            </div>
+            <a href="#" class="{% render 'btn-class', btn: 'link_primary' %} mt-5 mb-2.5">
+              <span>Button text</span>
+            </a>
+          </div>
+        {% endfor %}
+      {% endif %}
+
+      {% for block in blocks %}
+        {% liquid
+          assign image = block.settings.image
+          assign title = block.settings.title
+          assign text = block.settings.text
+          assign button_url = block.settings.button_url
+          assign button_text = block.settings.button_text
+          assign button_type = block.settings.button_type
+        %}
+
+        <div class="group flex flex-col items-center">
+          <a
+            href="{{ button_url }}"
+            class="relative image-overflow-hidden mb-5 w-full pb-[350px] 4k:pb-[500px] {% if blocks.size < 3 %} smD:pb-[400px]{% endif %}"
+          >
+            {% if image != blank %}
+              {{
+                image
+                | image_url: width: 1000
+                | image_tag:
+                  alt: image.alt,
+                  class: 'absolute top-0 left-0 object-cover w-full h-full group-hover:scale-105 duration-500',
+                  loading: 'lazy',
+                  widths: '300, 400, 500, 600, 800, 1000'
+              }}
+            {% else %}
+              {{
+                'image'
+                | placeholder_svg_tag: 'absolute top-0 left-0 object-cover w-full h-full group-hover:scale-105 duration-500'
+              }}
+            {% endif %}
+          </a>
+          {% if title != blank %}
+            <h3 class="text-sc-title font-primary mb-3 text-center text-2xl font-medium">{{ title }}</h3>
+          {% endif %}
+          {% if text != blank %}
+            <div class="text-sc-body-primary rte text-center text-base">{{ text }}</div>
+          {% endif %}
+          {% if button_text != blank %}
+            <a href="{{ button_url }}" class="{% render 'btn-class', btn: button_type %} mt-5 mb-2.5">
+              <span>{{ button_text }}</span>
+            </a>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  {% elsif layout == 'slider' %}
+    <div
+      class="animate__animated swiper container overflow-visible opacity-0"
+      x-ignore
+      ax-load
+      x-data="swiperSlider($el, 'multicolumn_slider')"
+      x-intersect="$el.classList.add('animate__fadeIn')"
+    >
+      <div class="swiper-wrapper">
+        {% if blocks.size == 0 %}
+          {% for i in (1..3) %}
+            <div class="swiper-slide group flex max-w-[270px] flex-col items-center md:max-w-[300px] 2xl:max-w-[400px]">
+              <a
+                href="#"
+                class="bg-sc-bg-secondary image-overflow-hidden bg-secondary-gradient relative mb-5 w-full pb-[350px]"
+              >
+                {{
+                  'image'
+                  | placeholder_svg_tag: 'absolute top-0 left-0 object-cover w-full h-full group-hover:scale-105 duration-500'
+                }}
+              </a>
+              <h3 class="text-sc-title font-primary mb-3 text-center text-2xl font-medium">Lorem ipsum</h3>
+              <div class="text-sc-body-primary rte text-center text-base">
+                <p>
+                  Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et
+                  dolore.
+                </p>
+              </div>
+              <a href="#" class="{% render 'btn-class', btn: 'link_primary' %} mt-5 mb-2.5">
+                <span>Button text</span>
+              </a>
+            </div>
+          {% endfor %}
+        {% endif %}
+
+        {% for block in blocks %}
+          {% liquid
+            assign image = block.settings.image
+            assign title = block.settings.title
+            assign text = block.settings.text
+            assign button_url = block.settings.button_url
+            assign button_text = block.settings.button_text
+            assign button_type = block.settings.button_type
+          %}
+
+          <div class="swiper-slide group flex max-w-[270px] flex-col items-center md:max-w-[300px] 2xl:max-w-[400px]">
+            <a
+              href="{{ button_url }}"
+              class="swiper-slide max-w-[270px] md:max-w-[300px] 2xl:max-w-[400px] relative image-overflow-hidden mb-5 w-full pb-[350px] {% if blocks.size < 3 %} smD:pb-[400px]{% endif %}"
+            >
+              {% if image != blank %}
+                {{
+                  image
+                  | image_url: width: 1000
+                  | image_tag:
+                    alt: image.alt,
+                    class: 'absolute top-0 left-0 object-cover w-full h-full group-hover:scale-105 duration-500',
+                    loading: 'lazy',
+                    widths: '300, 400, 500, 600, 800, 1000'
+                }}
+              {% else %}
+                {{
+                  'image'
+                  | placeholder_svg_tag: 'absolute top-0 left-0 object-cover w-full h-full group-hover:scale-105 duration-500'
+                }}
+              {% endif %}
+            </a>
+            {% if title != blank %}
+              <h3 class="text-sc-title font-primary mb-3 text-center text-2xl font-medium">{{ title }}</h3>
+            {% endif %}
+            {% if text != blank %}
+              <div class="text-sc-body-primary rte text-center text-base">{{ text }}</div>
+            {% endif %}
+            {% if button_text != blank %}
+              <a href="{{ button_url }}" class="{% render 'btn-class', btn: button_type %} mt-5 mb-2.5">
+                <span>{{ button_text }}</span>
+              </a>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+</div>
+
+{% schema %}
+{
+  "name": "Multicolumn",
+  "tag": "section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "section_anchor_id",
+      "label": "Section anchor id",
+      "default": "Multicolumn"
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "Color scheme"
+    },
+    {
+      "type": "select",
+      "id": "layout",
+      "label": "Layout type",
+      "options": [
+        {
+          "value": "grid",
+          "label": "Grid"
+        },
+        {
+          "value": "slider",
+          "label": "Slider"
+        }
+      ],
+      "default": "grid"
+    },
+    {
+      "type": "header",
+      "content": "Padding Y settings"
+    },
+    {
+      "type": "number",
+      "id": "pt_mob",
+      "label": "Mobile padding top in px",
+      "default": 40
+    },
+    {
+      "type": "number",
+      "id": "pb_mob",
+      "label": "Mobile padding bottom in px",
+      "default": 40
+    },
+    {
+      "type": "number",
+      "id": "pt_tab",
+      "label": "Tablet padding top in px",
+      "default": 80
+    },
+    {
+      "type": "number",
+      "id": "pb_tab",
+      "label": "Tablet padding bottom in px",
+      "default": 80
+    },
+    {
+      "type": "number",
+      "id": "pt_desk",
+      "label": "Desktop padding top in px",
+      "default": 80
+    },
+    {
+      "type": "number",
+      "id": "pb_desk",
+      "label": "Desktop padding bottom in px",
+      "default": 80
+    }
+  ],
+  "blocks": [
+    {
+      "type": "block",
+      "name": "card",
+      "settings": [
+        {
+          "type": "header",
+          "content": "Block settings"
+        },
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Block image"
+        },
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Block title"
+        },
+        {
+          "type": "richtext",
+          "id": "text",
+          "label": "Block text"
+        },
+        {
+          "type": "header",
+          "content": "Button settings"
+        },
+        {
+          "type": "url",
+          "id": "button_url",
+          "label": "Block button url"
+        },
+        {
+          "type": "text",
+          "id": "button_text",
+          "label": "Block button text",
+          "default": "Button text"
+        },
+        {
+          "type": "select",
+          "id": "button_type",
+          "label": "Block button type",
+          "options": [
+            {
+              "value": "btn_primary_main_fill",
+              "label": "main primary fill"
+            },
+            {
+              "value": "btn_secondary_main_fill",
+              "label": "main secondary fill"
+            },
+            {
+              "value": "btn_primary_main_outline",
+              "label": "main primary outline"
+            },
+            {
+              "value": "btn_secondary_main_outline",
+              "label": "main secondary outline"
+            },
+            {
+              "value": "btn_primary_pill_fill",
+              "label": "pill primary fill"
+            },
+            {
+              "value": "btn_secondary_pill_fill",
+              "label": "pill secondary fill"
+            },
+            {
+              "value": "btn_primary_pill_outline",
+              "label": "pill primary outline"
+            },
+            {
+              "value": "btn_secondary_pill_outline",
+              "label": "pill secondary outline"
+            },
+            {
+              "value": "link_primary",
+              "label": "Link primary"
+            },
+            {
+              "value": "link_secondary",
+              "label": "Link secondary"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Multicolumn",
+      "category": "Repeatable"
+    }
+  ]
+}
+{% endschema %}
