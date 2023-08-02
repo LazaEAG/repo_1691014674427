@@ -1,0 +1,29 @@
+{% liquid
+  assign list = 'a, e, y, u, o'
+  assign label = label | downcase | remove: '*'
+  assign first_label_symbol = label | downcase | first
+
+  assign error_message = 'Please enter a'
+  if list contains first_label_symbol
+    assign error_message = error_message | append: 'n'
+  endif
+
+  assign error_message = error_message | append: ' ' | append: label
+
+  if type == 'password'
+    assign error_message = error_message | append: ' (min: 8 characters)'
+  endif
+  if name contains 'password_confirmation'
+    assign error_message = error_message | append: ' and needs to match password'
+  endif
+%}
+
+<div
+  class="text-c-accent-error mt-2 flex space-x-1 text-xs"
+  x-transition:enter
+  x-cloak
+  x-show="invalidElements['{{ id }}']"
+>
+  {% render 'icon', name: 'status-exclamation', class: 'shrink-0' %}
+  <span class="text-left">{{- error_message -}}</span>
+</div>
