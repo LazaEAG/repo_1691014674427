@@ -1,0 +1,55 @@
+<template x-if="$store.drawer.id === item.key">
+  <template x-teleport="#drawer-overlay">
+    <div class="bg-sc-bg-primary flex h-full w-full flex-col p-6">
+      <h3 class="text-sc-title font-primary mb-5 flex items-center justify-between text-3xl">
+        <span>Recurring Refill</span>
+        <button type="button" @click="$store.drawer.hide()">
+          {% render 'icon', name: 'close', size: 'lg' %}
+        </button>
+      </h3>
+      <div class="flex-1">
+        <span class="text-sc-title mb-3 block text-sm">Delivery every:</span>
+        <div class="space-y-3">
+          <template x-for="(selling_plan, index) in selling_plans">
+            <button
+              type="button"
+              data-selling-plan-option
+              class="bg-sc-subtitle/5 flex w-full items-center justify-between px-5 py-2"
+              @click="changeActiveSellingPlan({id: selling_plan.id })"
+              :class="
+                {
+                '!bg-sc-subtitle/30': item.selling_plan_allocation && item.selling_plan_allocation.selling_plan.id === selling_plan.id
+                }
+              "
+            >
+              <span class="text-sc-title text-base" x-text="selling_plan.options[0].value"></span>
+              <span class="text-sc-subtitle text-xs font-medium" x-show="index === 0">Most Popular</span>
+            </button>
+          </template>
+        </div>
+      </div>
+
+      <div class="mt-auto w-full">
+        <span class="mb-6 block">
+          <s
+            class="text-sc-body-primary mr-1 inline-block text-sm"
+            x-text="window.currency(item.price)"
+          ></s>
+          <span
+            class="text-sc-title inline-block text-lg"
+            x-text="getDiscountPrice()"
+          ></span>
+        </span>
+        <button
+          type="button"
+          :aria-busy="loading"
+          class="{% render 'btn-class', btn: 'btn_primary_pill_fill' %} w-full"
+          @click="changeSellingPlan"
+        >
+          <span>Subscribe</span>
+          {% render 'btn-loader' %}
+        </button>
+      </div>
+    </div>
+  </template>
+</template>
