@@ -1,0 +1,467 @@
+{% liquid
+  assign sticky_header = section.settings.sticky_header
+  assign layout_header = section.settings.layout_header
+  assign login_layout = section.settings.login_layout
+
+  assign shop_all_btn_text = section.settings.shop_all_btn_text
+  assign shop_all_btn_url = section.settings.shop_all_btn_url
+  assign shop_all_btn = section.settings.shop_all_btn
+
+  assign static_links = section.settings.static_link
+  assign mega_menus = section.settings.mega_menu
+%}
+
+{% render 'global-sections-css-variables-setter' %}
+
+<div
+  data-section-id="{{ section.id }}"
+  x-data="header()"
+  @scroll.window="scrollHandler()"
+  class="container flex h-[60px] items-center xl:h-[65px]"
+>
+  <!-- MOBILE/TABLET VIEW START -->
+  <div class="relative flex h-full w-full items-center justify-between py-3 xl:hidden">
+    <!-- BURGER/SEARCH -->
+    <div class="text-sc-title flex w-1/3 items-center justify-start space-x-5">
+      <button
+        type="button"
+        aria-controls="header-sidebar-menu"
+        @click="$store.mobileMenu.show()"
+        :aria-expanded="$store.mobileMenu.visible"
+      >
+        <span class="sr-only">Open navigation menu</span>
+        {% render 'icon', name: 'burger' %}
+      </button>
+      {% unless request.page_type == 'search' %}
+        <a
+          href="{{ routes.search_url }}"
+          aria-controls="search-drawer"
+          :aria-expanded="$store.drawer.visible && $store.drawer.id === 'search'"
+          @click.prevent="$store.drawer.show({ id: 'search' })"
+        >
+          <span class="sr-only">Open search</span>
+          {% render 'icon', name: 'search' %}
+        </a>
+      {% endunless %}
+    </div>
+    <!-- LOGO -->
+    <a class="flex w-1/3 justify-center" href="{{ routes.root_url }}">
+      {% if settings.logo_dark != blank and settings.logo_light != blank %}
+        <span class="sr-only">{{ shop.name }}</span>
+        <div class="shop-logo">
+          <!-- if shop have short logo will be good display it on screens smaller then 375px -->
+          <img
+            src="{{ settings.logo_dark | img_url: 'master' }}"
+            alt="{{ shop.name | append: ' logo' }}"
+            class="w-full object-cover"
+          >
+        </div>
+      {% else %}
+        <span class="text-center text-xl uppercase">{{ shop.name }}</span>
+      {% endif %}
+    </a>
+
+    <div class="text-sc-title flex w-1/3 items-center justify-end">
+      {% unless request.page_type contains 'customers/' %}
+        <a
+          class="hidden md:block"
+          href="{% if customer %}{{ routes.account_url }}{% else %}{{ routes.account_login_url }}{% endif %}"
+          {% unless customer %}
+            {% if login_layout == 'drawer' %}
+              aria-controls="login-drawer"
+              :aria-expanded="$store.drawer.visible && $store.drawer.id === 'login-drawer'"
+              @click.prevent="$store.drawer.show({ id: 'login-drawer' })"
+            {% endif %}
+          {% endunless %}
+        >
+          <span class="sr-only">Login to your account</span>
+          {% render 'icon', name: 'account' %}
+        </a>
+
+        {% comment %}DRAWER LOGIN LAYOUT START{% endcomment %}
+        <template x-if="$store.drawer.id === 'login-drawer'">
+          <template x-teleport="#drawer-overlay">
+            <div
+              class="bg-sc-bg-primary bg-primary-gradient md:px-15 flex h-full flex-col items-center py-8 px-5 md:py-10"
+              x-data="account()"
+            >
+              <template x-if="login_tab == 'login'">
+                <div class="w-full flex-grow overflow-auto">
+                  {% render 'layout-account-login' %}
+                </div>
+              </template>
+              <template x-if="login_tab == 'register'">
+                <div class="w-full flex-grow overflow-auto">
+                  {% render 'layout-account-register' %}
+                </div>
+              </template>
+              <template x-if="login_tab == 'forgot_password'">
+                <div class="w-full flex-grow overflow-auto">
+                  {% render 'layout-account-forgot-password' %}
+                </div>
+              </template>
+            </div>
+          </template>
+        </template>
+        {% comment %}DRAWER LOGIN LAYOUT END{% endcomment %}
+      {% endunless %}
+
+      <a
+        href="{{ shop_all_btn_url }}"
+        class="md:ml-5 {% if cart.item_count != 0 %}hidden{% endif %} {% render 'btn-class', btn: shop_all_btn %}"
+        :class="$store['cart'].obj.item_count === 0 ? '!flex' : '!hidden'"
+      >
+        <span>{{ shop_all_btn_text }}</span>
+      </a>
+
+      <button
+        type="button"
+        class="md:ml-5 relative {% if cart.item_count == 0 %}hidden{% endif %}"
+        aria-controls="cart-drawer"
+        :aria-expanded="$store.cart.visible"
+        @click="$store['cart'].visible ? $store['cart'].hide() : $store['cart'].show()"
+        :class="$store['cart'].obj.item_count > 0 ? '!flex' : '!hidden'"
+      >
+        <span class="sr-only">Open cart drawer</span>
+        {% render 'icon', name: 'cart', class: 'w-[28px] h-[28px]' %}
+        <span
+          x-text="$store['cart'].obj.item_count"
+          class="absolute left-1/2 bottom-1 -translate-x-1/2 text-xs font-medium text-white"
+        ></span>
+      </button>
+    </div>
+  </div>
+  <!-- MOBILE/TABLET VIEW END -->
+
+  <!-- DESKTOP HEADER LAYOUTS START -->
+  {% case layout_header %}
+    {% when 'burger' %}
+      {% render 'layout-header-desktop-with-burger', login_layout: login_layout %}
+    {% when 'logo_left' %}
+      {% render 'layout-header-desktop-with-logo-left', login_layout: login_layout %}
+  {% endcase %}
+  <!-- DESKTOP HEADER LAYOUTS END -->
+</div>
+
+<script>
+  const $header = document.getElementById('shopify-section-{{ section.id }}');
+
+  {% if sticky_header == true %}
+    $header.classList.add('sticky', 'top-0', 'z-50', 'bg-sc-bg-primary/80', 'header-backdrop')
+  {% endif %}
+
+  document.documentElement.style.setProperty(
+    '--header-height',
+    Math.round($header.clientHeight) + 'px'
+  );
+
+  window.addEventListener('resize', () => {
+    //added timeout because we have transition for changing button size.
+    setTimeout(() => {
+      const $header = document.getElementById('shopify-section-{{ section.id }}');
+      document.documentElement.style.setProperty(
+        '--header-height',
+        Math.round($header.clientHeight) + 'px'
+      );
+    }, 300);
+  });
+
+  window.addEventListener('scroll', () => {
+    const $header = document.getElementById('shopify-section-{{ section.id }}');
+    const scrollPos = window.pageYOffset || window.scrollY;
+    return scrollPos > 0 ? $header.classList.add('shadow-sm') : $header.classList.remove('shadow-sm');
+  });
+</script>
+
+{% schema %}
+{
+  "name": "Header",
+  "tag": "header",
+  "class": "relative duration-200",
+  "settings": [
+    {
+      "type": "color",
+      "id": "sc-title",
+      "label": "Title",
+      "default": "#151515"
+    },
+    {
+      "type": "color",
+      "id": "sc-body-primary",
+      "label": "Body primary",
+      "default": "#52525B"
+    },
+    {
+      "type": "color",
+      "id": "sc-bg-primary",
+      "label": "Primary background",
+      "default": "#FFFFFF"
+    },
+    {
+      "type": "color",
+      "id": "sc-bg-secondary",
+      "label": "Secondary background",
+      "default": "#F6F6F6"
+    },
+    {
+      "type": "color",
+      "id": "sc-btn-primary-bg-default",
+      "label": "Primary btn bg default",
+      "default": "#054A49"
+    },
+    {
+      "type": "color",
+      "id": "sc-btn-primary-text-default",
+      "label": "Primary btn text default",
+      "default": "#FFFFFF"
+    },
+    {
+      "type": "color",
+      "id": "sc-btn-primary-bg-hover",
+      "label": "Primary btn bg hover",
+      "default": "#002F2E"
+    },
+    {
+      "type": "color",
+      "id": "sc-btn-primary-text-hover",
+      "label": "Primary btn text hover",
+      "default": "#FFFFFF"
+    },
+    {
+      "type": "checkbox",
+      "id": "sticky_header",
+      "label": "Sticky header",
+      "default": true
+    },
+    {
+      "type": "link_list",
+      "id": "header_link_list",
+      "label": "Header link list",
+      "info": "Please note! Used only for header layout 'Logo left'."
+    },
+    {
+      "type": "select",
+      "id": "layout_header",
+      "label": "Select header layout",
+      "options": [
+        {
+          "value": "burger",
+          "label": "Burger"
+        },
+        {
+          "value": "logo_left",
+          "label": "Logo left"
+        }
+      ],
+      "info": "If you use 'Burger layout', please setup sidebar in 'MOBILE MENU' section"
+    },
+    {
+      "type": "select",
+      "id": "login_layout",
+      "label": "Select login layout",
+      "options": [
+        {
+          "value": "drawer",
+          "label": "Drawer"
+        },
+        {
+          "value": "page",
+          "label": "Page"
+        }
+      ],
+      "default": "drawer"
+    },
+    {
+      "type": "header",
+      "content": "Shop All button"
+    },
+    {
+      "type": "text",
+      "id": "shop_all_btn_text",
+      "label": "Button text",
+      "default": "Shop all"
+    },
+    {
+      "type": "url",
+      "id": "shop_all_btn_url",
+      "label": "Button url"
+    },
+    {
+      "type": "select",
+      "id": "shop_all_btn",
+      "label": "Select button type",
+      "options": [
+        {
+          "value": "btn_primary_main_fill",
+          "label": "main primary fill"
+        },
+        {
+          "value": "btn_primary_main_outline",
+          "label": "main primary outline"
+        },
+        {
+          "value": "btn_primary_pill_fill",
+          "label": "pill primary fill"
+        },
+        {
+          "value": "btn_primary_pill_outline",
+          "label": "pill primary outline"
+        }
+      ],
+      "default": "btn_primary_main_fill"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "mega_menu",
+      "name": "Mega menu",
+      "settings": [
+        {
+          "type": "header",
+          "content": "Please note !"
+        },
+        {
+          "type": "paragraph",
+          "content": "Used only for header layout 'Logo left'"
+        },
+        {
+          "type": "select",
+          "id": "mega_menu_layout",
+          "label": "Mega-menu layout",
+          "options": [
+            {
+              "value": "mega_menu_layout_main",
+              "label": "Main"
+            },
+            {
+              "value": "mega_menu_layout_links",
+              "label": "Links"
+            }
+          ],
+          "default": "mega_menu_layout_main"
+        },
+        {
+          "type": "checkbox",
+          "id": "disable_links",
+          "label": "Disable links",
+          "info": "Used only with mega-menu layout 'Main'",
+          "default": false
+        },
+        {
+          "type": "text",
+          "id": "menu_item",
+          "label": "Menu item"
+        },
+        {
+          "type": "header",
+          "content": "Item 1"
+        },
+        {
+          "type": "product",
+          "id": "product_1",
+          "label": "Product"
+        },
+        {
+          "type": "image_picker",
+          "id": "product_image_1",
+          "label": "Custom image",
+          "info": "If empty, will be displayed image from product above"
+        },
+        {
+          "type": "text",
+          "id": "product_title_1",
+          "label": "Custom title",
+          "info": "If empty will be displayed title from product above"
+        },
+        {
+          "type": "text",
+          "id": "product_subtitle_1",
+          "label": "Custom subtitle",
+          "info": "If empty, won't displayed"
+        },
+        {
+          "type": "header",
+          "content": "Item 2"
+        },
+        {
+          "type": "product",
+          "id": "product_2",
+          "label": "Product"
+        },
+        {
+          "type": "image_picker",
+          "id": "product_image_2",
+          "label": "Custom image",
+          "info": "If empty, will be displayed image from product above"
+        },
+        {
+          "type": "text",
+          "id": "product_title_2",
+          "label": "Custom title",
+          "info": "If empty will be displayed title from product above"
+        },
+        {
+          "type": "text",
+          "id": "product_subtitle_2",
+          "label": "Custom subtitle",
+          "info": "If empty, won't displayed"
+        },
+        {
+          "type": "header",
+          "content": "Item 3"
+        },
+        {
+          "type": "product",
+          "id": "product_3",
+          "label": "Product"
+        },
+        {
+          "type": "image_picker",
+          "id": "product_image_3",
+          "label": "Custom image",
+          "info": "If empty, will be displayed image from product above"
+        },
+        {
+          "type": "text",
+          "id": "product_title_3",
+          "label": "Custom title",
+          "info": "If empty will be displayed title from product above"
+        },
+        {
+          "type": "text",
+          "id": "product_subtitle_3",
+          "label": "Custom subtitle",
+          "info": "If empty, won't displayed"
+        },
+        {
+          "type": "header",
+          "content": "Item 4"
+        },
+        {
+          "type": "product",
+          "id": "product_4",
+          "label": "Product"
+        },
+        {
+          "type": "image_picker",
+          "id": "product_image_4",
+          "label": "Custom image",
+          "info": "If empty, will be displayed image from product above"
+        },
+        {
+          "type": "text",
+          "id": "product_title_4",
+          "label": "Custom title",
+          "info": "If empty will be displayed title from product above"
+        },
+        {
+          "type": "text",
+          "id": "product_subtitle_4",
+          "label": "Custom subtitle",
+          "info": "If empty, won't displayed"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}
