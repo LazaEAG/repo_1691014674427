@@ -1,0 +1,229 @@
+{% liquid
+  assign cart_type = section.settings.cart_type
+  assign cart_title = section.settings.cart_title
+  assign empty_cart_title = section.settings.empty_cart_title
+  assign cart_progress_bar_enabled = section.settings.cart_progress_bar_enabled
+  assign cart_progress_bar_threshold = section.settings.cart_progress_bar_threshold
+  assign cart_progress_message = section.settings.cart_progress_message
+  assign cart_progress_reached_message = section.settings.cart_progress_reached_message
+  assign cart_upsells_enabled = section.settings.cart_upsells_enabled
+  assign cart_upsells_title = section.settings.cart_upsells_title
+  assign cart_upsells = section.settings.cart_upsells
+  assign cart_footer_title = section.settings.cart_footer_title
+  assign cart_footer_privacy_rte = section.settings.cart_footer_privacy_rte
+  assign cart_checkout_btn_text = section.settings.cart_checkout_btn_text
+
+  assign empty_cart_btns = section.blocks | where: 'type', 'empty_cart_btn'
+%}
+
+<!-- LAYOUT CART DRAWER START -->
+
+<div @click.self="$store.cart.hide()" class="fixed inset-0 h-full w-full">
+  <div
+    x-cloak
+    x-show="$store.cart.visible"
+    class="md:rounded-tl-r-block md:rounded-bl-r-block bg-sc-bg-primary fixed top-0 right-0 bottom-0 z-10 flex h-full w-full max-w-[550px] flex-col overflow-hidden shadow"
+    x-transition:enter="transition ease-out duration-300"
+    x-transition:enter-start="translate-y-full md:translate-y-0 md:translate-x-full"
+    x-transition:enter-end="translate-y-0 md:translate-x-0"
+    x-transition:leave="transition ease-in duration-300"
+    x-transition:leave-start="translate-y-0 md:translate-x-0"
+    x-transition:leave-end="translate-y-full md:translate-y-0 md:translate-x-full"
+  >
+    <!-- !$store.cart.obj.item_count -->
+    <!-- EMPTY CART STATE START -->
+    <div class="flex h-full w-full flex-col overflow-hidden" x-show="!$store.cart.obj.item_count">
+      <!-- EMPTY CART HEADER -->
+      <div class="px-7.5 bg-sc-bg-primary pt-5 md:px-10">
+        <div class="border-sc-body-primary/30 flex items-center justify-between border-b pb-3">
+          <h3 class="text-sc-title font-primary text-lg font-medium">{{ empty_cart_title }}</h3>
+          <button
+            type="button"
+            class="ml-5"
+            @click="$store.cart.hide()"
+          >
+            <span class="sr-only">Close cart drawer</span>
+            {% render 'icon',
+              name: 'close',
+              class: 'w-6 h-6 xl:w-10 xl:h-10 text-sc-title/60 hover:text-sc-title duration-200'
+            %}
+          </button>
+        </div>
+      </div>
+
+      <div class="scrollbar-hide flex w-full flex-1 flex-col overflow-y-auto overflow-x-hidden">
+        {% if empty_cart_btns != blank %}
+          <!-- EMPTY CART BUTTONS -->
+          <div class="px-7.5 pt-7.5 pb-12.5 min-h-[300px] w-full md:px-10">
+            <div class="mx-auto w-full max-w-[180px] space-y-4 md:max-w-[290px] md:space-y-5">
+              {% for block in empty_cart_btns %}
+                {% assign text = block.settings.text %}
+                {% assign url = block.settings.url %}
+                {% assign btn = 'btn_primary_pill_fill' %}
+                <a
+                  href="{{ url }}"
+                  class="w-full {% render 'btn-class', btn: btn %}"
+                >
+                  <span>{{ text }}</span>
+                </a>
+              {% endfor %}
+            </div>
+          </div>
+        {% endif %}
+
+        <!-- EMPTY CART UPSELLS -->
+        {% if cart_upsells_enabled == true and cart_upsells.count > 0 %}
+          <div
+            class="pb-12.5 bg-sc-bg-primary mt-auto pt-2.5"
+          >
+            <!-- UPSELLS TITLE -->
+            <span class="px-7.5 text-sc-title font-primary mb-2 block text-sm text-sm font-medium md:px-10 md:text-base">
+              {{ cart_upsells_title }}
+            </span>
+
+            {% if cart_upsells.count > 1 %}
+              <div
+                x-ignore
+                ax-load
+                x-data="swiperSlider($el, 'cart_upsells')"
+                class="swiper px-7.5 overflow-visible md:px-10"
+              >
+                <div class="swiper-wrapper">
+                  {% for product in cart_upsells %}
+                    <div class="swiper-slide h-auto max-w-[280px] md:max-w-[335px]">
+                      {% render 'cart-upsell-item', product: product, cart_type: cart_type %}
+                    </div>
+                  {% endfor %}
+                </div>
+                <div
+                  class="swiper-pagination sw-bullet:bg-sc-subtitle/30 sw-bullet-active:bg-sc-subtitle sw-bullet:w-2 sw-bullet:h-2 sw-bullet:!m-[0_4px_0_0] mt-3 justify-start"
+                ></div>
+              </div>
+            {% else %}
+              {% for product in cart_upsells %}
+                <div class="px-7.5 md:px-10">
+                  {% render 'cart-upsell-item', product: product, cart_type: cart_type %}
+                </div>
+              {% endfor %}
+            {% endif %}
+          </div>
+        {% endif %}
+      </div>
+    </div>
+    <!-- EMPTY CART STATE END -->
+
+    <!-- $store.cart.obj.item_count -->
+    <!-- CART WITH ITEMS STATE START -->
+    <div class="flex h-full w-full flex-col" x-show="$store.cart.obj.item_count">
+      <!-- CART HEADER -->
+      <div class="px-7.5 bg-sc-bg-primary flex w-full flex-col pt-5 md:px-10 {% if cart_progress_bar_enabled %} space-y-2 {% endif %}">
+        <div class="{% unless cart_progress_bar_enabled %}border-sc-body-primary/30 border-b pb-3{% endunless %} flex w-full items-center justify-between">
+          <h3 class="text-sc-title font-primary text-lg font-medium">{{ cart_title }}</h3>
+          <button
+            type="button"
+            class="ml-5"
+            @click="$store.cart.hide()"
+          >
+            <span class="sr-only">Close cart drawer</span>
+            {% render 'icon',
+              name: 'close',
+              class: 'w-6 h-6 xl:w-10 xl:h-10 text-sc-title/60 hover:text-sc-title duration-200'
+            %}
+          </button>
+        </div>
+
+        {% render 'cart-progress-bar',
+          cart_type: cart_type,
+          cart_progress_bar_threshold: cart_progress_bar_threshold,
+          cart_progress_message: cart_progress_message,
+          cart_progress_reached_message: cart_progress_reached_message
+        %}
+      </div>
+      <!-- LINE ITEMS + UPSELLS -->
+      <div class="scrollbar-hide flex w-full flex-1 flex-col overflow-y-auto overflow-x-hidden">
+        <!-- CART ITEMS -->
+        <!-- CART ITEMS WRAPPER -->
+        <div class="px-7.5 pt-5 pb-10 md:px-10">
+          <template x-for="(item, index) in $store['cart'].obj.items">
+            {% render 'cart-item', cart_type: cart_type %}
+          </template>
+        </div>
+
+        <!-- CART UPSELLS -->
+        {% if cart_upsells_enabled == true and cart_upsells.count > 0 %}
+          <div
+            class="pb-12.5 bg-sc-bg-primary mt-auto pt-2.5"
+            x-show="$store['cart'].obj.items && !$store.cart.upsells.every(item => $store['cart'].obj.items.some(lineItem => lineItem.handle === item.handle))"
+          >
+            <!-- UPSELLS TITLE -->
+            <span class="px-7.5 text-sc-title mb-2 block text-sm text-sm font-medium md:px-10 md:text-base">
+              {{ cart_upsells_title }}
+            </span>
+
+            {% if cart_upsells.count > 1 %}
+              <div
+                x-ignore
+                ax-load
+                x-data="swiperSlider($el, 'cart_upsells')"
+                class="swiper px-7.5 overflow-visible md:px-10"
+              >
+                <div class="swiper-wrapper">
+                  {% for product in cart_upsells %}
+                    <template x-if="$store['cart'].obj.items && !$store['cart'].obj.items.some(lineItem => lineItem.handle === '{{ product.handle }}')">
+                      <div
+                        class="swiper-slide h-auto max-w-[280px] md:max-w-[335px]"
+                        :class="slidesCount === 1 && '!w-full !max-w-none'"
+                      >
+                        {% render 'cart-upsell-item', product: product, cart_type: cart_type %}
+                      </div>
+                    </template>
+                  {% endfor %}
+                </div>
+                <div
+                  class="swiper-pagination sw-bullet:bg-sc-subtitle/30 sw-bullet-active:bg-sc-subtitle sw-bullet:w-2 sw-bullet:h-2 sw-bullet:!m-[0_4px_0_0] mt-3 justify-start"
+                ></div>
+              </div>
+            {% else %}
+              {% for product in cart_upsells %}
+                <div class="px-7.5 md:px-10">
+                  {% render 'cart-upsell-item', product: product, cart_type: cart_type %}
+                </div>
+              {% endfor %}
+            {% endif %}
+          </div>
+        {% endif %}
+      </div>
+      <!-- CART TOTAL -->
+      <div class="px-7.5 pb-7.5 md:pt-7.5 bg-sc-bg-secondary pt-5 md:px-10 md:pb-10">
+        <div class="mb-1 flex w-full items-center justify-between">
+          <span class="text-sc-title font-primary text-lg font-medium">{{ cart_footer_title }}</span>
+          <span class="font-primary flex items-center space-x-1">
+            <s
+              x-show="$store.cart.obj.cart_compared_price > $store.cart.obj.total_price"
+              class="text-sc-body-primary text-sm"
+              x-text="window.currency($store.cart.obj.cart_compared_price)"
+            ></s>
+            <span
+              class="text-sc-title text-lg font-medium md:text-xl"
+              x-text="window.currency($store.cart.obj.total_price)"
+            ></span>
+          </span>
+        </div>
+        <div class="rte text-sc-body-primary mb-5 max-w-[265px] text-xs">
+          {{ cart_footer_privacy_rte }}
+        </div>
+        <button
+          type="button"
+          @click="$store.cart.checkout(); $el.setAttribute('aria-busy', 'true')"
+          class="{% render 'btn-class', btn: 'btn_primary_pill_fill' %} w-full"
+        >
+          {% render 'icon', name: 'lock' %}
+          <span>{{ cart_checkout_btn_text }}</span>
+          {% render 'btn-loader' %}
+        </button>
+      </div>
+    </div>
+    <!-- CART WITH ITEMS STATE END -->
+  </div>
+  <!-- LAYOUT CART DRAWER END -->
+</div>
