@@ -1,0 +1,37 @@
+<article x-data="{ isOpen: false }" class="border-sc-body-primary/30 overflow-hidden border-t py-5">
+  <!-- ITEM HEAD -->
+  <button
+    @click="isOpen = !isOpen"
+    type="button"
+    class="no-select group flex w-full items-center justify-between text-left"
+    aria-controls="content-{{ index }}"
+  >
+    <span
+      class="font-primary group-hover:text-sc-link-primary-text-default text-base font-medium"
+      :class="isOpen ? 'text-sc-link-primary-text-default' : 'text-sc-title'"
+    >
+      {{ label }}
+    </span>
+    {% render 'icon',
+      name: 'help-chevron',
+      label: label,
+      class: 'ml-5 duration-300 ease-in-out shrink-0 group-hover:text-sc-link-primary-text-default'
+    %}
+  </button>
+
+  <!-- ITEM CONTENT -->
+  <div
+    x-cloak
+    x-collapse
+    x-show="isOpen"
+    :aria-hidden="!isOpen"
+    id="content-{{ index }}"
+  >
+    <div
+      class="pt-5 opacity-0 duration-300 ease-in-out"
+      :class="{'opacity-100' : isOpen}"
+    >
+      {{ content }}
+    </div>
+  </div>
+</article>
