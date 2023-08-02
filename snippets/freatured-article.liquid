@@ -1,0 +1,79 @@
+{%- comment -%}
+  BLOG FEATURED ARTICLE COMPONENT
+
+  * blog
+  * article: the article to render. If no article is passed then a placeholder is generated
+  * class
+{%- endcomment -%}
+
+<article class="smD:grid smD:items-center smD:grid-cols-[minmax(0,520px)_minmax(0,1fr)] 2k:max-w-[1680px] smD:min-h-[600px] smD:gap-x-15 2k:grid-cols-[minmax(0,870px)_minmax(0,1fr)] group container 2xl:grid-cols-[minmax(0,726px)_minmax(0,1fr)] {{ class -}}">
+  <a
+    href="{{ article.url }}"
+    aria-label="Open article - {{ article.title -}}"
+    class="block image-overflow-hidden relative h-0 pb-[100%] md:pb-[450px] smD:pb-0 smD:h-full {% render 'btn-class', btn: 'link_primary' %}"
+  >
+    {% assign img_class = 'absolute top-0 left-0 h-full w-full object-cover object-center group-hover:scale-105 duration-700 ease-in-out' %}
+    {% if article.image %}
+      {{
+        article.image
+        | image_url: width: article.image.width
+        | image_tag: loading: 'lazy', widths: '300, 400, 500, 600, 700', class: img_class
+      }}
+    {% else %}
+      {{ 'lifestyle-2' | placeholder_svg_tag: img_class }}
+    {% endif %}
+  </a>
+
+  <div class="smD:py-10 2xl:py-15 smD:text-left space-y-3 pt-5">
+    <div class="gap-x-7.5 flex flex-row flex-wrap gap-y-3">
+      <p class="text-sc-title flex items-center space-x-2 text-sm">
+        {% render 'icon', name: 'calendar' %}
+        <span>
+          {{- article.published_at | default: 'now' | date: '%B %d, %Y' -}}
+        </span>
+      </p>
+
+      {% assign reading_time = article.content
+        | strip_html
+        | split: ' '
+        | size
+        | times: 1.0
+        | divided_by: 250
+        | ceil
+      -%}
+      {% if reading_time > 0 %}
+        <p class="text-sc-title flex items-center space-x-2 text-sm">
+          {% render 'icon', name: 'clockwise' %}
+          <span>
+            {{- reading_time }}
+            {{ reading_time | pluralize: 'minute', 'minutes' }} read
+          </span>
+        </p>
+      {% endif %}
+    </div>
+
+    <a
+      href="{{ article.url }}"
+      aria-label="Open article - {{ article.title -}}"
+      class="text-sc-title font-primary group-hover:text-sc-link-primary-text-default mb-3 block w-max max-w-full text-4xl font-medium duration-500 ease-in-out md:text-5xl"
+    >
+      {{- article.title -}}
+    </a>
+
+    {% if article.excerpt_or_content != blank %}
+      <div class="rte text-sc-body-primary text-sm md:text-base 2xl:text-lg">
+        {{- article.excerpt_or_content -}}
+      </div>
+    {% endif %}
+
+    <div class="flex justify-start pt-2">
+      <a
+        href="{{ article.url }}"
+        class="{% render 'btn-class', btn: 'link_primary' %}"
+        aria-label="Open article - {{ article.title -}}"
+      >
+        <span>{{- 'common.learn_more' | t -}}</span>
+      </a>
+    </div>
+  </div>
+</article>
