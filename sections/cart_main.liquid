@@ -1,0 +1,489 @@
+<!-- cart_main.liquid -->
+
+{% liquid
+  assign cart_title = section.settings.cart_title
+  assign cart_type = 'full_width'
+
+  assign cart_footer_title = section.settings.cart_footer_title
+  assign cart_footer_privacy_rte = section.settings.cart_footer_privacy_rte
+  assign cart_checkout_btn_text = section.settings.cart_checkout_btn_text
+
+  assign empty_cart_title = section.settings.empty_cart_title
+  assign cart_upsells_enabled = section.settings.cart_upsells_enabled
+  assign cart_upsells_title = section.settings.cart_upsells_title
+  assign cart_upsells = section.settings.cart_upsells
+
+  assign empty_cart_btns = section.blocks | where: 'type', 'empty_cart_btn'
+%}
+
+{% render 'global-sections-css-variables-setter' %}
+
+<div
+  data-section-id="{{ section.id }}"
+  :class="$store.cart.obj.item_count ? 'bg-sc-bg-secondary' : 'bg-sc-bg-primary'"
+>
+  <div class="mx-auto w-full max-w-[980px]">
+    <!-- EMPTY CART -->
+    <div
+      class="mx-auto max-w-[600px]"
+      x-show="!$store.cart.obj.item_count"
+      :class="!$store.cart.obj.item_count && '!mx-auto' "
+    >
+      <h1 class="px-7.5 font-primary md:pt-7.5 2xl:pt-12.5 relative mb-3 flex w-full justify-between pt-2.5 text-center text-lg font-medium md:px-0 md:text-3xl">
+        {{ empty_cart_title }}
+      </h1>
+      <div class="overflow-hidden">
+        {% if empty_cart_btns != blank %}
+          <!-- EMPTY CART BUTTONS -->
+          <div class="mx-auto w-full max-w-[180px] space-y-4 py-10 md:max-w-[290px] md:space-y-5">
+            {% for block in empty_cart_btns %}
+              {% assign text = block.settings.text %}
+              {% assign url = block.settings.url %}
+              {% assign btn = 'btn_primary_pill_fill' %}
+              <a
+                href="{{ url }}"
+                class="w-full {% render 'btn-class', btn: btn %}"
+              >
+                <span>{{ text }}</span>
+              </a>
+            {% endfor %}
+          </div>
+        {% endif %}
+        {% if cart_upsells_enabled == true and cart_upsells.count > 0 %}
+          <div class="bg-sc-bg-primary">
+            <div class="pb-7.5 bg-sc-subtitle/30 px-7.5 pt-4 md:py-10 md:px-0 md:px-10">
+              <!-- UPSELLS TITLE -->
+              <span class="text-sc-title mb-2 block text-sm text-sm font-medium md:text-base">
+                {{ cart_upsells_title }}
+              </span>
+
+              {% if cart_upsells.count > 0 %}
+                <div
+                  x-ignore
+                  ax-load
+                  x-data="swiperSlider($el, 'cart_upsells')"
+                  class="swiper overflow-visible"
+                >
+                  <div class="swiper-wrapper">
+                    {% for product in cart_upsells %}
+                      <div class="swiper-slide h-auto max-w-[280px] md:max-w-[335px] {% if cart_upsells.count == 1 %} !w-full !max-w-none {% endif %}">
+                        {% render 'cart-upsell-item',
+                          product: product,
+                          cart_type: 'full_width',
+                          class: '!bg-sc-bg-primary'
+                        %}
+                      </div>
+                    {% endfor %}
+                  </div>
+                  <div
+                    class="{% if cart_upsells.count == 1 %} hidden {% endif %} swiper-pagination sw-bullet:bg-sc-subtitle/30 sw-bullet-active:bg-sc-subtitle sw-bullet:w-2 sw-bullet:h-2 sw-bullet:!m-[0_4px_0_0] mt-3 justify-start"
+                  ></div>
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- CART WITH ITEMS -->
+    <div
+      x-show="$store.cart.obj.item_count"
+      class="lg:pb-25 w-full"
+    >
+      <h1
+        class="px-7.5 font-primary md:pt-7.5 2xl:pt-12.5 mx-auto mb-3 mb-3 flex max-w-[600px] items-center justify-between pt-2.5 text-lg font-medium md:px-0 md:text-3xl lg:mx-0 lg:max-w-none"
+      >
+        {{ cart_title }}
+      </h1>
+      <div class="w-full lg:flex lg:items-start lg:justify-between">
+        <div class="mx-auto w-full max-w-[600px] lg:mx-0">
+          <template x-for="(item, index) in $store['cart'].obj.items">
+            {% render 'cart-item', cart_type: cart_type %}
+          </template>
+
+          <!-- CART UPSELLS -->
+          {% if cart_upsells_enabled == true and cart_upsells.count > 0 %}
+            <div class="bg-sc-bg-primary overflow-hidden">
+              <div
+                class="pb-7.5 bg-sc-subtitle/30 px-7.5 pt-4 md:py-10 md:px-0 md:px-10"
+                x-show="$store['cart'].obj.items && !$store.cart.upsells.every(item => $store['cart'].obj.items.some(lineItem => lineItem.handle === item.handle))"
+              >
+                <!-- UPSELLS TITLE -->
+                <span class="text-sc-title mb-2 block text-sm text-sm font-medium md:text-base">
+                  {{ cart_upsells_title }}
+                </span>
+
+                <div
+                  x-ignore
+                  ax-load
+                  x-data="swiperSlider($el, 'cart_upsells')"
+                  class="swiper overflow-visible"
+                >
+                  <div class="swiper-wrapper">
+                    {% for product in cart_upsells %}
+                      <template x-if="$store['cart'].obj.items && !$store['cart'].obj.items.some(lineItem => lineItem.handle === '{{ product.handle }}')">
+                        <div
+                          class="swiper-slide h-auto max-w-[280px] md:max-w-[335px]"
+                          :class="slidesCount === 1 && '!w-full !max-w-none'"
+                        >
+                          {% render 'cart-upsell-item',
+                            product: product,
+                            cart_type: 'full_width',
+                            class: '!bg-sc-bg-primary'
+                          %}
+                        </div>
+                      </template>
+                    {% endfor %}
+                  </div>
+                  <div
+                    class="swiper-pagination sw-bullet:bg-sc-subtitle/30 sw-bullet-active:bg-sc-subtitle sw-bullet:w-2 sw-bullet:h-2 sw-bullet:!m-[0_4px_0_0] mt-3 justify-start"
+                    :class="slidesCount === 1 && '!hidden'"
+                  ></div>
+                </div>
+              </div>
+            </div>
+          {% endif %}
+        </div>
+
+        <div
+          class="z-5 border-sc-title/30 top-15 sticky hidden w-full max-w-[330px] lg:block"
+        >
+          <div class="bg-sc-bg-primary pt-7.5 px-7.5">
+            <button
+              type="button"
+              @click="$store.cart.checkout(); $el.setAttribute('aria-busy', 'true')"
+              class="{% render 'btn-class', btn: 'btn_primary_pill_fill' %} w-full"
+            >
+              {% render 'icon', name: 'lock' %}
+              <span>{{ cart_checkout_btn_text }}</span>
+              {% render 'btn-loader' %}
+            </button>
+          </div>
+          <div class="bg-sc-bg-primary px-7.5 py-4">
+            <div class="bg-sc-title/30 h-px w-full"></div>
+          </div>
+
+          <div class="bg-sc-bg-primary px-7.5 pb-7.5">
+            <div class="mb-3 flex w-full items-center justify-between">
+              <div>
+                <span class="text-sc-title block text-base">{{ cart_footer_title }}</span>
+              </div>
+              <span>
+                <s
+                  x-show="$store.cart.obj.cart_compared_price > $store.cart.obj.total_price"
+                  class="text-sc-body-primary text-sm"
+                  x-text="window.currency($store.cart.obj.cart_compared_price)"
+                ></s>
+                <span
+                  class="text-sc-title text-lg font-medium md:text-xl lg:text-base"
+                  x-text="window.currency($store.cart.obj.total_price)"
+                ></span>
+              </span>
+            </div>
+
+            <div
+              x-data="
+                {
+                  open: false,
+                  orderNote: ''
+                }
+              "
+              x-init="$watch('$store.cart.obj', val => {orderNote = val.note})"
+              class="border-sc-title/30"
+            >
+              <button
+                type="button"
+                @click="open = !open"
+                class="text-sc-subtitle flex w-full items-center justify-between text-sm"
+              >
+                <span
+                  class="underline"
+                  x-text="$store.cart.obj.note ? 'Order note added' : 'Add order note'"
+                ></span>
+                <div x-show="!open && !$store.cart.obj.note">
+                  {% render 'icon', name: 'plus-bold', class: 'smD:hover:opacity-70' %}
+                </div>
+                <div x-show="open && !$store.cart.obj.note">
+                  {% render 'icon', name: 'minus-bold', class: 'smD:hover:opacity-70' %}
+                </div>
+                <div x-show="$store.cart.obj.note" class="text-sc-body-primary text-base">
+                  <span>Edit</span>
+                </div>
+              </button>
+              <div x-show="open" x-collapse class="w-full">
+                <div class="bg-sc-bg-primary mt-3 w-full">
+                  <textarea
+                    x-model="orderNote"
+                    placeholder="Order note"
+                    rows="4"
+                    style="resize: none;"
+                    class="bg-sc-subtitle/5 text-sc-body-primary mb-3 w-full p-3 text-sm outline-none"
+                  ></textarea>
+                  <button
+                    type="button"
+                    class="{% render 'btn-class', btn: 'btn_primary_pill_fill' %}"
+                    @click="
+                      $el.setAttribute('aria-busy', 'true');
+                      await $store.cart.updateOrderNote(orderNote);
+                      open = false
+                      $el.setAttribute('aria-busy', 'false');
+                    "
+                  >
+                    <span>Save</span>
+                    {% render 'btn-loader' %}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-sc-bg-primary">
+            <div class="px-7.5 bg-sc-subtitle/30 py-4">
+              <div class="rte text-sc-body-primary text-center text-xs">{{ cart_footer_privacy_rte }}</div>
+            </div>
+          </div>
+          {% for btn in empty_cart_btns %}
+            {% if forloop.index == 1 %}
+              <div class="mt-5 flex justify-center">
+                <a href="{{ btn.settings.url }}" class="mx-auto {% render 'btn-class', btn: 'link_primary' %}">
+                  {{- btn.settings.text -}}
+                </a>
+              </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- CART TOTAL STICKY -->
+  <div
+    x-data="
+      {
+        observer: new IntersectionObserver(([e]) => e.target.classList.toggle('shadow-top', e.intersectionRatio < 1),{threshold: [1]})
+      }
+    "
+    x-init="observer.observe($el)"
+    x-show="$store.cart.obj.item_count"
+    class="bg-sc-bg-primary p-7.5 z-5 border-sc-title/30 sticky bottom-[-1px] pb-[calc(1em+1px)] md:mt-10 lg:hidden"
+  >
+    <div class="mx-auto max-w-[565px] space-y-3">
+      <div class="flex w-full items-center justify-between">
+        <div>
+          <span class="text-sc-title block text-base">{{ cart_footer_title }}</span>
+        </div>
+        <span>
+          <s
+            x-show="$store.cart.obj.cart_compared_price > $store.cart.obj.total_price"
+            class="text-sc-body-primary text-sm"
+            x-text="window.currency($store.cart.obj.cart_compared_price)"
+          ></s>
+          <span
+            class="text-sc-title text-lg font-medium md:text-xl lg:text-base"
+            x-text="window.currency($store.cart.obj.total_price)"
+          ></span>
+        </span>
+      </div>
+
+      <button
+        type="button"
+        @click="$store.cart.checkout(); $el.setAttribute('aria-busy', 'true')"
+        class="{% render 'btn-class', btn: 'btn_primary_pill_fill' %} w-full"
+      >
+        {% render 'icon', name: 'lock' %}
+        <span>{{ cart_checkout_btn_text }}</span>
+        {% render 'btn-loader' %}
+      </button>
+
+      <div class="rte text-sc-body-primary text-xs">{{ cart_footer_privacy_rte }}</div>
+
+      <div
+        x-data="
+          {
+            open: false,
+            orderNote: ''
+          }
+        "
+        x-init="$watch('$store.cart.obj', val => {orderNote = val.note})"
+        class="border-sc-title/30"
+      >
+        <button
+          type="button"
+          @click="open = !open"
+          class="text-sc-subtitle flex w-full items-center justify-between text-sm"
+        >
+          <span
+            class="underline"
+            x-text="$store.cart.obj.note ? 'Order note added' : 'Add order note'"
+          ></span>
+          <div x-show="!open && !$store.cart.obj.note">
+            {% render 'icon', name: 'plus-bold', class: 'smD:hover:opacity-70' %}
+          </div>
+          <div x-show="open && !$store.cart.obj.note">
+            {% render 'icon', name: 'minus-bold', class: 'smD:hover:opacity-70' %}
+          </div>
+          <div x-show="$store.cart.obj.note" class="text-sc-body-primary text-base">
+            <span>Edit</span>
+          </div>
+        </button>
+        <div x-show="open" x-collapse class="w-full">
+          <div class="bg-sc-bg-primary mt-3 w-full">
+            <textarea
+              x-model="orderNote"
+              placeholder="Order note"
+              rows="4"
+              style="resize: none;"
+              class="bg-sc-subtitle/5 text-sc-body-primary mb-3 w-full p-3 text-sm outline-none"
+            ></textarea>
+            <button
+              type="button"
+              class="{% render 'btn-class', btn: 'btn_primary_pill_fill' %}"
+              @click="
+                $el.setAttribute('aria-busy', 'true');
+                await $store.cart.updateOrderNote(orderNote);
+                open = false
+                $el.setAttribute('aria-busy', 'false');
+              "
+            >
+              <span>Save</span>
+              {% render 'btn-loader' %}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "CART MAIN",
+  "tag": "section",
+  "settings": [
+    {
+      "type": "color",
+      "id": "sc-title",
+      "label": "Title",
+      "default": "#151515"
+    },
+    {
+      "type": "color",
+      "id": "sc-subtitle",
+      "label": "Subtitle",
+      "default": "#054A49"
+    },
+    {
+      "type": "color",
+      "id": "sc-body-primary",
+      "label": "Body primary",
+      "default": "#52525B"
+    },
+    {
+      "type": "color",
+      "id": "sc-bg-primary",
+      "label": "Primary background",
+      "default": "#FFFFFF"
+    },
+    {
+      "type": "color",
+      "id": "sc-bg-secondary",
+      "label": "Secondary background",
+      "default": "#F6F6F6"
+    },
+    {
+      "type": "color",
+      "id": "sc-btn-primary-bg-default",
+      "label": "Primary btn bg default",
+      "default": "#054A49"
+    },
+    {
+      "type": "color",
+      "id": "sc-btn-primary-text-default",
+      "label": "Primary btn text default",
+      "default": "#FFFFFF"
+    },
+    {
+      "type": "color",
+      "id": "sc-btn-primary-bg-hover",
+      "label": "Primary btn bg hover",
+      "default": "#002F2E"
+    },
+    {
+      "type": "color",
+      "id": "sc-btn-primary-text-hover",
+      "label": "Primary btn text hover",
+      "default": "#FFFFFF"
+    },
+    {
+      "type": "text",
+      "id": "cart_title",
+      "label": "Cart title",
+      "default": "Your Cart"
+    },
+    {
+      "type": "text",
+      "id": "empty_cart_title",
+      "label": "Empty cart title",
+      "default": "You cart is empty"
+    },
+    {
+      "type": "checkbox",
+      "id": "cart_upsells_enabled",
+      "label": "Upsells enabled ?",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "cart_upsells_title",
+      "label": "Upsells title",
+      "default": "Trending this month"
+    },
+    {
+      "type": "product_list",
+      "id": "cart_upsells",
+      "label": "Upsell products",
+      "limit": 4
+    },
+    {
+      "type": "header",
+      "content": "Cart total settings"
+    },
+    {
+      "type": "text",
+      "id": "cart_footer_title",
+      "label": "Cart total title",
+      "default": "Subtotal"
+    },
+    {
+      "type": "richtext",
+      "id": "cart_footer_privacy_rte",
+      "label": "Cart privacy"
+    },
+    {
+      "type": "text",
+      "id": "cart_checkout_btn_text",
+      "label": "Checkout button text",
+      "default": "Checkout"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "empty_cart_btn",
+      "name": "Empty cart button",
+      "settings": [
+        {
+          "type": "text",
+          "id": "text",
+          "label": "Text",
+          "default": "Button text"
+        },
+        {
+          "type": "url",
+          "id": "url",
+          "label": "Button link"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}
