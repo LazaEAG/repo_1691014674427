@@ -1,0 +1,323 @@
+<!-- product-list.liquid -->
+{% liquid
+  assign section_anchor_id = section.settings.section_anchor_id | handleize
+  assign color_scheme = section.settings.color_scheme
+
+  assign image = section.settings.image
+  assign image_tab = section.settings.image_tab | default: image
+  assign image_mob = section.settings.image_mob | default: image_tab
+  assign image_size = section.settings.image_size
+  case image_size
+    when 'small'
+      assign img_size = 'min-h-[350px] md:min-h-[550px]'
+    when 'medium'
+      assign img_size = 'min-h-[432px] md:min-h-[600px]'
+    when 'large'
+      assign img_size = 'min-h-[500px] md:min-h-[650px]'
+  endcase
+
+  assign layout = section.settings.layout
+  assign headline = section.settings.headline
+  assign text = section.settings.text
+
+  assign button_url = section.settings.button_url
+  assign button_text = section.settings.button_text
+  assign button_type = section.settings.button_type
+
+  assign pt_mob = section.settings.pt_mob
+  assign pb_mob = section.settings.pb_mob
+  assign pt_tab = section.settings.pt_tab
+  assign pb_tab = section.settings.pb_tab
+  assign pt_desk = section.settings.pt_desk
+  assign pb_desk = section.settings.pb_desk
+%}
+
+{% render 'section-paddings',
+  section_id: section.id,
+  pt_mob: pt_mob,
+  pb_mob: pb_mob,
+  pt_tab: pt_tab,
+  pb_tab: pb_tab,
+  pt_desk: pt_desk,
+  pb_desk: pb_desk
+%}
+
+<div
+  id="{{ section_anchor_id }}"
+  data-section-id="{{ section.id }}"
+  class="color-scheme-{{ color_scheme }} bg-sc-bg-primary bg-primary-gradient"
+>
+  <div
+    class="
+      smD:grid smD:items-center smD:grid-cols-2
+      {% if layout == 'container' -%}
+        2xl:grid-cols-[minmax(0,1fr)_minmax(0,550px)] 4k:max-w-[1640px] smD:gap-x-15 container
+      {%- elsif layout == 'container_reverse' -%}
+        2xl:grid-cols-[minmax(0,550px)_minmax(0,1fr)] 4k:max-w-[1640px] smD:gap-x-15 container
+      {%- endif -%}
+    "
+  >
+    <div class="{% if layout contains 'reverse' %}smD:order-1{% endif %}">
+      {% assign img_class = img_size | append: ' h-full w-full object-cover object-center' %}
+      {% if image %}
+        <picture>
+          <source srcset="{{ image | image_url: width: 2000 }}" media="(min-width: 1150px)">
+          <source srcset="{{ image_tab | image_url: width: 1150 }}" media="(min-width: 740px)">
+          <source srcset="{{ image_mob | image_url: width: 740 }}" media="(max-width: 740px)">
+          <img
+            class="{{ img_class }}"
+            src="{{ image | image_url: width: 2000 }}"
+            alt="{{ image.alt | escape }}"
+          >
+        </picture>
+      {% else %}
+        {{ 'lifestyle-2' | placeholder_svg_tag: img_class }}
+      {% endif %}
+    </div>
+    <div
+      class="pt-10 smD:py-10 2xl:py-15 text-center smD:text-left {% if layout contains 'wide' -%} px-7.5 smD:px-15 2xl:px-30 2k:px-50{%- endif -%}"
+    >
+      {% if headline %}
+        <div class="mb-3 overflow-hidden">
+          <h3
+            class="animate__animated text-sc-title font-primary text-4xl font-medium opacity-0 2xl:text-5xl"
+            x-intersect="$el.classList.add('animate__fadeInUp')"
+          >
+            {{ headline }}
+          </h3>
+        </div>
+      {% endif %}
+      {% if text %}
+        <div class="overflow-hidden">
+          <div
+            class="animate__animated eag-delay-500ms rte text-sc-body-primary text-sm opacity-0 md:text-base 2xl:text-lg"
+            x-intersect="$el.classList.add('animate__fadeInUp')"
+          >
+            {{ text }}
+          </div>
+        </div>
+      {% endif %}
+      {% if button_text != blank %}
+        <div class="smD:justify-start mt-5 flex justify-center">
+          <a
+            href="{{ button_url }}"
+            class="{% render 'btn-class', btn: button_type %}"
+            aria-label="{{ button_text }}"
+          >
+            <span>
+              {{- button_text -}}
+            </span>
+          </a>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Image with text",
+  "tag": "section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "section_anchor_id",
+      "label": "Section anchor id",
+      "default": "Image with text"
+    },
+    {
+      "type": "header",
+      "content": "Image settings"
+    },
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "Desktop image"
+    },
+    {
+      "type": "image_picker",
+      "id": "image_tab",
+      "label": "Tablet image (optional)"
+    },
+    {
+      "type": "image_picker",
+      "id": "image_mob",
+      "label": "Mobile image (optional)"
+    },
+    {
+      "type": "select",
+      "id": "image_size",
+      "label": "Image height",
+      "options": [
+        {
+          "value": "small",
+          "label": "Small"
+        },
+        {
+          "value": "medium",
+          "label": "Medium"
+        },
+        {
+          "value": "large",
+          "label": "Large"
+        }
+      ],
+      "default": "medium",
+      "info": "aspect ratio 3:2"
+    },
+    {
+      "type": "header",
+      "content": "Content settings"
+    },
+    {
+      "type": "select",
+      "id": "layout",
+      "label": "Layout type",
+      "options": [
+        {
+          "value": "wide",
+          "label": "Wide"
+        },
+        {
+          "value": "wide_reverse",
+          "label": "Wide reverse"
+        },
+        {
+          "value": "container",
+          "label": "Container"
+        },
+        {
+          "value": "container_reverse",
+          "label": "Container reverse"
+        }
+      ],
+      "default": "wide"
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "Color scheme"
+    },
+    {
+      "type": "text",
+      "id": "headline",
+      "label": "Section headline",
+      "default": "Lorem ipsum is place holder text"
+    },
+    {
+      "type": "richtext",
+      "id": "text",
+      "label": "Section text",
+      "default": "<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore.</p>"
+    },
+    {
+      "type": "header",
+      "content": "Button settings"
+    },
+    {
+      "type": "url",
+      "id": "button_url",
+      "label": "Section button url"
+    },
+    {
+      "type": "text",
+      "id": "button_text",
+      "label": "Section button text",
+      "default": "Button text"
+    },
+    {
+      "type": "select",
+      "id": "button_type",
+      "label": "Section button type",
+      "options": [
+        {
+          "value": "btn_primary_main_fill",
+          "label": "main primary fill"
+        },
+        {
+          "value": "btn_secondary_main_fill",
+          "label": "main secondary fill"
+        },
+        {
+          "value": "btn_primary_main_outline",
+          "label": "main primary outline"
+        },
+        {
+          "value": "btn_secondary_main_outline",
+          "label": "main secondary outline"
+        },
+        {
+          "value": "btn_primary_pill_fill",
+          "label": "pill primary fill"
+        },
+        {
+          "value": "btn_secondary_pill_fill",
+          "label": "pill secondary fill"
+        },
+        {
+          "value": "btn_primary_pill_outline",
+          "label": "pill primary outline"
+        },
+        {
+          "value": "btn_secondary_pill_outline",
+          "label": "pill secondary outline"
+        },
+        {
+          "value": "link_primary",
+          "label": "Link primary"
+        },
+        {
+          "value": "link_secondary",
+          "label": "Link secondary"
+        }
+      ]
+    },
+    {
+      "type": "header",
+      "content": "Padding Y settings"
+    },
+    {
+      "type": "number",
+      "id": "pt_mob",
+      "label": "Mobile padding top in px",
+      "default": 0
+    },
+    {
+      "type": "number",
+      "id": "pb_mob",
+      "label": "Mobile padding bottom in px",
+      "default": 40
+    },
+    {
+      "type": "number",
+      "id": "pt_tab",
+      "label": "Tablet padding top in px",
+      "default": 0
+    },
+    {
+      "type": "number",
+      "id": "pb_tab",
+      "label": "Tablet padding bottom in px",
+      "default": 0
+    },
+    {
+      "type": "number",
+      "id": "pt_desk",
+      "label": "Desktop padding top in px",
+      "default": 0
+    },
+    {
+      "type": "number",
+      "id": "pb_desk",
+      "label": "Desktop padding bottom in px",
+      "default": 0
+    }
+  ],
+  "presets": [
+    {
+      "name": "Image with text",
+      "category": "Repeatable"
+    }
+  ]
+}
+{% endschema %}
