@@ -1,0 +1,253 @@
+{% liquid
+  assign logo = section.settings.logo
+  assign logo_width = section.settings.logo_width
+  assign navlist = section.settings.linklist
+  assign copyright_text = section.settings.copyright_text
+  assign info_title = section.settings.info_title
+  assign info_text = section.settings.info_text
+
+  assign desktop_grid = 'smD:grid-cols-5'
+  case navlist.links.size
+    when 1
+      assign desktop_grid = 'smD:grid-cols-1'
+    when 2
+      assign desktop_grid = 'smD:grid-cols-3'
+    when 3
+      assign desktop_grid = 'smD:grid-cols-3'
+    when 4
+      assign desktop_grid = 'smD:grid-cols-4'
+    when 5
+      assign desktop_grid = 'smD:grid-cols-5'
+  endcase
+%}
+
+{% render 'global-sections-css-variables-setter' %}
+
+<div
+  data-section-id="{{ section.id }}"
+  class="bg-sc-bg-primary text-sc-title pt-12.5 pb-5 md:pt-20"
+>
+  <div class="space-y-7.5 container">
+    <div class="smD:flex smD:flex-row-reverse">
+      <div class="smD:space-y-0 smD:grid {{ desktop_grid }} smD:gap-5 2xl:gap-12.5 w-full space-y-6">
+        {%- for link in navlist.links -%}
+          <!-- Mobile accordion START -->
+          <div
+            x-data="accordion({{ forloop.first }})"
+            aria-label="Open {{ link.title }} accordion"
+            aria-labelledby="nav-heading-{{- forloop.index -}}"
+            class="smD:hidden"
+          >
+            {% if forloop.first %}
+              <div class="bg-sc-title/30 mb-3 h-0.5"></div>
+            {% endif %}
+
+            <button
+              @click="toggle()"
+              role="button"
+              aria-controls="nav-list-{{- forloop.index -}}"
+              class="flex w-full items-center justify-between space-x-3"
+            >
+              <h3 class="font-primary text-left text-xl" id="nav-heading-{{- forloop.index -}}">
+                {{- link.title -}}
+              </h3>
+              {% render 'icon', name: 'accordion-icon', class: 'xl:hidden' -%}
+            </button>
+
+            {%- if link.links.size > 0 -%}
+              <ul
+                id="nav-list-{{- forloop.index -}}"
+                x-show="isOpen"
+                x-cloak
+                x-collapse
+                class="space-y-4"
+              >
+                {%- for child_link in link.links -%}
+                  <li class="text-base {% if forloop.first -%}mt-3{%- endif -%}">
+                    {{-
+                      child_link.title
+                      | link_to: child_link.url,
+                        class: 'btn-link-anim duration-200 ease-in-out text-sc-body-primary hover:text-sc-title'
+                    -}}
+                  </li>
+                {%- endfor -%}
+              </ul>
+            {%- endif -%}
+
+            <div class="bg-sc-title/30 mt-6 h-0.5"></div>
+          </div>
+          <!-- Mobile accordion END -->
+
+          <!-- Desktop list START -->
+          {% unless forloop.last %}
+            <div
+              class="
+                smD:block hidden
+                {% if forloop.index == 5 or forloop.index == 9 or forloop.index == 13 and logo != blank or info_title != blank or info_text != blank %}col-start-2{% endif %}
+              "
+            >
+              <h3 class="font-primary text-xl">
+                {{- link.title -}}
+              </h3>
+
+              {%- if link.links.size > 0 -%}
+                <ul class="mt-3 space-y-2">
+                  {%- for child_link in link.links -%}
+                    <li class="text-base">
+                      {{-
+                        child_link.title
+                        | link_to: child_link.url,
+                          class: 'btn-link-anim duration-200 ease-in-out text-sc-body-primary hover:text-sc-title'
+                      -}}
+                    </li>
+                  {%- endfor -%}
+                </ul>
+              {%- endif -%}
+            </div>
+          {% endunless %}
+          <!-- Desktop list END -->
+        {%- endfor -%}
+        {% if logo != 'none' or info_title != blank or info_text != blank %}
+          <div class="smD:space-y-7 smD:-order-1 w-full space-y-3">
+            <div class="">
+              {% if logo != 'none' and settings[logo] != blank %}
+                {{
+                  settings[logo]
+                  | image_url: width: logo_width
+                  | image_tag: loading: 'lazy', alt: shop.name, class: 'mb-5'
+                }}
+              {% elsif logo == 'name' %}
+                <h2 class="text-2xl md:text-3xl 2xl:text-5xl">{{ shop.name }}</h2>
+              {% endif %}
+              {% if info_title != blank %}
+                <h3 class="2k:pb-3 font-primary text-xl 2xl:text-2xl">{{- info_title -}}</h3>
+              {% endif %}
+              {% if info_text != blank %}
+                <div class="rte text-sc-body-primary 2k:text-lg mt-2 text-lg md:text-base">{{ info_text }}</div>
+              {% endif %}
+            </div>
+            {% render 'social-media', class: 'hidden flex-wrap gap-3 smD:flex' %}
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    {% render 'social-media', class: 'flex flex-wrap gap-3 smD:hidden' %}
+
+    <div class="pt-5 pb-3 ">
+      <div class="bg-sc-title/30 h-0.5"></div>
+    </div>
+
+    <div class="smD:flex smD:items-baseline smD:justify-between smD:space-x-10">
+      {%- if copyright_text != blank -%}
+        <div class="smD:max-w-xs shrink-0 text-base">
+          {{- copyright_text -}}
+        </div>
+      {%- endif -%}
+
+      {%- for link in navlist.links -%}
+        {% if forloop.last %}
+          <ul class="sc-body-primary smD:flex hidden flex-wrap justify-end gap-y-2 space-x-4">
+            {%- for child_link in link.links -%}
+              <li class="text-sc-body-primary hover:text-sc-title text-sm duration-200 ease-in-out">
+                {{- child_link.title | link_to: child_link.url, class: 'btn-link-anim' -}}
+              </li>
+            {%- endfor -%}
+          </ul>
+        {% endif %}
+      {%- endfor -%}
+    </div>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Footer",
+  "tag": "footer",
+  "settings": [
+    {
+      "type": "color",
+      "id": "sc-title",
+      "label": "Title",
+      "default": "#FFFFFF"
+    },
+    {
+      "type": "color",
+      "id": "sc-body-primary",
+      "label": "Body primary",
+      "default": "#dad7cd"
+    },
+    {
+      "type": "color",
+      "id": "sc-bg-primary",
+      "label": "Primary background",
+      "default": "#0D1E0A"
+    },
+    {
+      "type": "header",
+      "content": "Footer settings"
+    },
+    {
+      "type": "link_list",
+      "id": "linklist",
+      "label": "Navigation linklist"
+    },
+    {
+      "type": "select",
+      "id": "logo",
+      "label": "Logo style",
+      "options": [
+        {
+          "value": "logo_dark",
+          "label": "Dark logo"
+        },
+        {
+          "value": "logo_light",
+          "label": "Light logo"
+        },
+        {
+          "value": "logo_dark_short",
+          "label": "Dark short logo"
+        },
+        {
+          "value": "logo_light_short",
+          "label": "Light short logo"
+        },
+        {
+          "value": "name",
+          "label": "Display store name"
+        },
+        {
+          "value": "none",
+          "label": "Without logo"
+        }
+      ],
+      "default": "logo_light"
+    },
+    {
+      "type": "number",
+      "id": "logo_width",
+      "label": "Logo width",
+      "default": 164
+    },
+    {
+      "type": "text",
+      "id": "info_title",
+      "label": "Info title",
+      "default": "Got Questions?"
+    },
+    {
+      "type": "richtext",
+      "id": "info_text",
+      "label": "Info text",
+      "default": "<p>We're here 10am - 6pm EST <br>Monday - Saturday <br>1-855-999-0471</p>"
+    },
+    {
+      "type": "richtext",
+      "id": "copyright_text",
+      "label": "Copyright text",
+      "default": "<p>© 2023 Binaery.</p>"
+    }
+  ]
+}
+{% endschema %}
