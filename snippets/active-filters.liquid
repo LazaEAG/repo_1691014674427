@@ -1,0 +1,55 @@
+{%- assign active_values_count = 0 -%}
+
+{%- capture active_facets -%}
+  {%- for filter in collection.filters -%}
+    {%- if filter.type == 'price_range' -%}
+      {%- if filter.max_value.value != blank or filter.min_value.value != blank -%}
+        <a @click.prevent="clearFilter('{{ filter.url_to_remove }}')"
+           class="{{ bg_color | default: 'bg-sc-bg-secondary' }} group scroll-ml-7.5 md:scroll-ml-15 snap-start whitespace-nowrap text-sc-title text-xs md:text-sm flex items-center space-x-1 rounded-full py-1 px-3"
+           href="{{ filter.url_to_remove }}"
+           is="facet-link"
+           aria-label="remove filter - {{ filter.label }}"
+        >
+          <span>
+              {{- filter.min_value.value | default: 0 | money_without_trailing_zeros }} - {{ filter.max_value.value | default: filter.range_max | money_without_trailing_zeros -}}
+          </span>
+          {% render 'icon', name: 'close', class: 'text-sc-title group-hover:rotate-90 ease-in-out duration-300' %}
+        </a>
+        {%- assign active_values_count = active_values_count | plus: 1 -%}
+      {%- endif -%}
+    {%- else -%}
+      {%- for active_value in filter.active_values -%}
+          <a @click.prevent="clearFilter('{{ active_value.url_to_remove }}')"
+             class="{{ bg_color | default: 'bg-sc-bg-secondary' }} group scroll-ml-7.5 md:scroll-ml-15 snap-start whitespace-nowrap text-sc-title text-xs md:text-sm flex items-center space-x-1 rounded-full py-1 px-3"
+             href="{{ active_value.url_to_remove }}"
+             is="facet-link"
+             aria-label="{{ 'collection.faceting.remove_filter' | t: name: active_value.label }}"
+          >
+            <span>
+                {{- filter.label }}: {{ active_value.label -}}
+            </span>
+            {% render 'icon', name: 'close', class: 'text-sc-title group-hover:rotate-90 ease-in-out duration-300' %}
+          </a>
+        {%- assign active_values_count = active_values_count | plus: 1 -%}
+      {%- endfor -%}
+    {%- endif -%}
+  {%- endfor -%}
+{%- endcapture -%}
+
+{%- if active_values_count > 0 -%}
+  <div class="{{- class }} scrollbar-hide relative flex snap-x items-center space-x-4 overflow-x-auto lg:flex-wrap lg:gap-x-4 lg:gap-y-2 lg:space-x-0 lg:overflow-hidden">
+    {{- active_facets -}}
+  </div>
+  <div class="{{- class }}">
+    <button
+      class="no-select-all text-sc-title btn-link-anim-reverse whitespace-nowrap text-xs md:text-sm"
+      type="button"
+      @click.prevent="clearFilter('{{ collection.url }}')"
+    >
+      <span class="sr-only">Clear all filters</span>
+      <span>
+        {{ 'collection.facets.clear_all' | t }}
+      </span>
+    </button>
+  </div>
+{% endif %}
