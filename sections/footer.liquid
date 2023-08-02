@@ -1,0 +1,299 @@
+{% liquid
+  assign logo = section.settings.logo
+  assign logo_width = section.settings.logo_width
+  assign navlist = section.settings.linklist
+  assign copyright_text = section.settings.copyright_text
+  assign info_title = section.settings.info_title
+  assign list_id = section.settings.list_id
+  assign placeholder = section.settings.placeholder
+  assign thanks_text = section.settings.thanks_text
+
+  assign info_blocks = section.blocks | where: 'type', 'info'
+%}
+
+{% render 'global-sections-css-variables-setter' %}
+
+<div
+  data-section-id="{{ section.id }}"
+  class="bg-sc-bg-primary {% if info_blocks.size == 0 %}pt-5 md:pt-12.5{% else %}pt-12.5{% endif %} text-sc-title pb-5"
+>
+  <div class="container">
+    {% if info_blocks.size > 0 %}
+      <div class="smD:space-x-5 smD:mb-12.5 mb-5 flex items-start justify-center space-x-4">
+        {% for block in info_blocks %}
+          {% assign icon = block.settings.icon %}
+          {% assign title = block.settings.title %}
+          {% assign description = block.settings.description %}
+          <div class="smD:items-start smD:space-y-3 flex flex-1 flex-col items-center space-y-2">
+            {%- if icon != blank -%}
+              {{ icon | image_url: width: 24 | image_tag: loading: 'lazy', alt: title, class: 'h-6' }}
+            {%- endif -%}
+            {%- if title != blank -%}
+              <h3 class="smD:text-left font-primary smD:text-xl smD:font-normal text-center text-sm font-medium md:text-base">
+                {{- title -}}
+              </h3>
+            {%- endif -%}
+            {%- if description != blank -%}
+              <div class="smD:block text-sc-body-primary hidden text-base">{{- description -}}</div>
+            {%- endif -%}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+    <div class="pt-7.5 smD:pt-18 smD:space-y-0 smD:flex space-y-6 md:pt-5">
+      <div class="smD:space-y-7 smD:max-w-xs smD:mr-7.5 2xl:mr-18 w-full space-y-3 md:space-y-4 2xl:max-w-[420px]">
+        <div class="space-y-4">
+          {% if logo != 'none' and settings[logo] != blank %}
+            {{
+              settings[logo]
+              | image_url: width: logo_width
+              | image_tag: loading: 'lazy', alt: shop.name, class: 'mb-5'
+            }}
+          {% elsif logo == 'name' %}
+            <h2 class="text-2xl md:text-3xl 2xl:text-5xl">{{ shop.name }}</h2>
+          {% endif %}
+          {% if info_title != blank %}
+            <h3 class="2k:pb-3 text-lg md:text-base 2xl:text-2xl">{{- info_title -}}</h3>
+          {% endif %}
+        </div>
+        <div class="smD:max-w-full max-w-sm">
+          {% render 'snippet-klaviyo-form',
+            list_id: list_id,
+            placeholder: placeholder,
+            thanks_text: thanks_text,
+            is_footer: true,
+            type: 'footer'
+          %}
+        </div>
+        {% render 'social-media', class: 'hidden flex-wrap gap-3 smD:flex' %}
+      </div>
+      <div class="smD:space-y-0 smD:grid smD:grid-cols-3 2xl:gap-y-12.5 smD:gap-7.5 2xl:gap-x-18 w-full space-y-6">
+        {%- for link in navlist.links -%}
+          <!-- Mobile accordion START -->
+          <div
+            x-data="accordion({{ forloop.first }})"
+            aria-label="Open {{ link.title }} accordion"
+            aria-labelledby="nav-heading-{{- forloop.index -}}"
+            class="smD:hidden"
+          >
+            {% if forloop.first %}
+              <div class="bg-sc-title/30 mb-3 h-0.5"></div>
+            {% endif %}
+
+            <button
+              @click="toggle()"
+              role="button"
+              aria-controls="nav-list-{{- forloop.index -}}"
+              class="font-primary flex w-full items-center justify-between space-x-3"
+            >
+              <h3 class="text-left text-xl" id="nav-heading-{{- forloop.index -}}">
+                {{- link.title -}}
+              </h3>
+              {% render 'icon', name: 'accordion-icon', class: 'xl:hidden' -%}
+            </button>
+
+            {%- if link.links.size > 0 -%}
+              <ul
+                id="nav-list-{{- forloop.index -}}"
+                x-show="isOpen"
+                x-cloak
+                x-collapse
+                class="space-y-4"
+              >
+                {%- for child_link in link.links -%}
+                  <li class="text-base {% if forloop.first -%}mt-3{%- endif -%}">
+                    {{-
+                      child_link.title
+                      | link_to: child_link.url,
+                        class: 'btn-link-anim duration-200 ease-in-out text-sc-body-primary hover:text-sc-title'
+                    -}}
+                  </li>
+                {%- endfor -%}
+              </ul>
+            {%- endif -%}
+
+            <div class="bg-sc-title/30 mt-6 h-0.5"></div>
+          </div>
+          <!-- Mobile accordion END -->
+
+          <!-- Desktop list START -->
+          {% unless forloop.last %}
+            <div class="smD:block hidden">
+              <h3 class="font-primary text-xl">
+                {{- link.title -}}
+              </h3>
+
+              {%- if link.links.size > 0 -%}
+                <ul class="mt-3 space-y-2">
+                  {%- for child_link in link.links -%}
+                    <li class="text-base">
+                      {{-
+                        child_link.title
+                        | link_to: child_link.url,
+                          class: 'btn-link-anim duration-200 ease-in-out text-sc-body-primary hover:text-sc-title'
+                      -}}
+                    </li>
+                  {%- endfor -%}
+                </ul>
+              {%- endif -%}
+            </div>
+          {% endunless %}
+          <!-- Desktop list END -->
+        {%- endfor -%}
+      </div>
+    </div>
+    <div class="smD:block mt-18 mb-15 bg-sc-title/30 hidden h-0.5"></div>
+    <div class="space-y-7.5 smD:items-baseline smD:flex smD:justify-between smD:space-y-0 smD:space-x-10 mt-5 md:space-y-10">
+      {%- if copyright_text != blank -%}
+        <div class="smD:max-w-xs shrink-0 text-base">
+          {{- copyright_text -}}
+        </div>
+      {%- endif -%}
+
+      {% render 'social-media', class: 'flex flex-wrap gap-3 smD:hidden' %}
+
+      {%- for link in navlist.links -%}
+        {% if forloop.last %}
+          <ul class="sc-body-primary smD:flex hidden flex-wrap justify-end gap-y-2 space-x-4">
+            {%- for child_link in link.links -%}
+              <li class="text-sc-body-primary hover:text-sc-title text-sm duration-200 ease-in-out">
+                {{- child_link.title | link_to: child_link.url, class: 'btn-link-anim' -}}
+              </li>
+            {%- endfor -%}
+          </ul>
+        {% endif %}
+      {%- endfor -%}
+    </div>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Footer",
+  "tag": "footer",
+  "settings": [
+    {
+      "type": "color",
+      "id": "sc-title",
+      "label": "Title",
+      "default": "#FFFFFF"
+    },
+    {
+      "type": "color",
+      "id": "sc-body-primary",
+      "label": "Body primary",
+      "default": "#dad7cd"
+    },
+    {
+      "type": "color",
+      "id": "sc-bg-primary",
+      "label": "Primary background",
+      "default": "#0D1E0A"
+    },
+    {
+      "type": "header",
+      "content": "Footer settings"
+    },
+    {
+      "type": "link_list",
+      "id": "linklist",
+      "label": "Navigation linklist"
+    },
+    {
+      "type": "select",
+      "id": "logo",
+      "label": "Logo style",
+      "options": [
+        {
+          "value": "logo_dark",
+          "label": "Dark logo"
+        },
+        {
+          "value": "logo_light",
+          "label": "Light logo"
+        },
+        {
+          "value": "logo_dark_short",
+          "label": "Dark short logo"
+        },
+        {
+          "value": "logo_light_short",
+          "label": "Light short logo"
+        },
+        {
+          "value": "name",
+          "label": "Display store name"
+        },
+        {
+          "value": "none",
+          "label": "Without logo"
+        }
+      ],
+      "default": "logo_light"
+    },
+    {
+      "type": "number",
+      "id": "logo_width",
+      "label": "Logo width",
+      "default": 164
+    },
+    {
+      "type": "header",
+      "content": "Sign up settings"
+    },
+    {
+      "type": "text",
+      "id": "info_title",
+      "label": "Sign up info title",
+      "default": "Sign up for news, updates & 10% off your first order."
+    },
+    {
+      "type": "text",
+      "id": "list_id",
+      "label": "Klaviyo list id"
+    },
+    {
+      "type": "text",
+      "id": "placeholder",
+      "label": "Input placeholder",
+      "default": "E-mail"
+    },
+    {
+      "type": "richtext",
+      "id": "thanks_text",
+      "label": "Thanks text",
+      "default": "<p>Thanks for subscribing!</p>"
+    },
+    {
+      "type": "richtext",
+      "id": "copyright_text",
+      "label": "Copyright text",
+      "default": "<p>© 2023 Binaery.</p>"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "info",
+      "name": "info block",
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "icon",
+          "label": "Info block icon"
+        },
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Info block title"
+        },
+        {
+          "type": "richtext",
+          "id": "description",
+          "label": "Info block description"
+        }
+      ],
+      "limit": 4
+    }
+  ]
+}
+{% endschema %}
