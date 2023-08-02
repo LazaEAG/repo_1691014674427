@@ -1,0 +1,45 @@
+{% comment %}
+  PARAMS:
+    cart_type => drawer, full_width STRING
+    cart_progress_bar_threshold => NUMBER
+    cart_progress_message => STRING
+    cart_progress_reached_message => STRING
+{% endcomment %}
+
+{% assign amount_left = '<span class="font-medium" x-text="window.currency($store.cart.cart_progress_bar_threshold - $store.cart.obj.total_price)"></span>' %}
+
+{% case cart_type %}
+  {% when 'drawer' %}
+    <div class="cart-progress-bar">
+      <span
+        class="text-sc-title mb-2 block text-sm"
+        x-show="$store.cart.obj.total_price < $store.cart.cart_progress_bar_threshold"
+      >
+        {{ cart_progress_message | replace: '[amount_left]', amount_left }}
+      </span>
+      <span
+        class="text-sc-title mb-2 block text-sm"
+        x-show="$store.cart.obj.total_price >= $store.cart.cart_progress_bar_threshold"
+      >
+        {{ cart_progress_reached_message }}
+      </span>
+
+      <div
+        class="bg-sc-subtitle/30 h-1 w-full overflow-hidden"
+      >
+        <div
+          class="bg-sc-subtitle h-1 transition-all duration-300"
+          :style="
+            {
+            width:
+              $store.cart.obj.total_price >= $store.cart.cart_progress_bar_threshold
+              ? '100%'
+              : `${($store.cart.obj.total_price * 100) / $store.cart.cart_progress_bar_threshold}%`
+            }
+          "
+        ></div>
+      </div>
+    </div>
+  {% when 'full_width' %}
+
+{% endcase %}
