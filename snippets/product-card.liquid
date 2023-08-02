@@ -1,0 +1,160 @@
+{%- comment -%}
+  PRODUCT CARD COMPONENT
+
+  * product: the product to render
+  * show_bg
+  * content_align: text content align (left/center)
+  * show_atc
+  * index
+  * init_animation
+{%- endcomment -%}
+
+{% liquid
+  assign card_content = ''
+  assign quick_add_btn_text = section.settings.quick_add_btn_text | default: 'Quick add'
+  assign bg_color = bg_color | default: 'bg-sc-bg-secondary bg-sc-bg-secondary-gradient'
+
+  if show_bg
+    assign card_content = card_content | append: bg_color
+  endif
+  if show_bg or content_align == 'center' and show_bg == false
+    assign card_content = card_content | append: ' px-3'
+  endif
+  if content_align == 'center'
+    assign card_content = card_content | append: ' text-center items-center'
+  endif
+
+  assign index = index | default: 1
+  assign animation_delay = index | times: 100
+  assign init_animation = init_animation | default: true
+%}
+
+{%- capture id -%}id-{{ section.id }}-{{ 'now' | date: '%N' }}{%- endcapture -%}
+
+<article
+  class="animate__animated group flex flex-col opacity-0 {{ class }}"
+  x-data="productCard()"
+  {%- if init_animation -%}
+    x-init="setTimeout(() => { $el.classList.add('animate__fadeIn') }, {{ animation_delay }})"
+  {%- else -%}
+    x-intersect="setTimeout(() => { $el.classList.add('animate__fadeIn') }, {{ animation_delay }})"
+  {%- endif -%}
+>
+  <a
+    :href="selectedVariant.link"
+    aria-label="Redirect to {{ product.title }}"
+    class="image-overflow-hidden relative block pb-[100%]"
+  >
+    <img
+      loading="lazy"
+      class="absolute top-0 left-0 h-full w-full object-cover duration-500 group-hover:scale-105"
+      width="500"
+      height="500"
+      :src="selectedVariant.featured_image ? selectedVariant.featured_image.src : product.featured_image"
+      :alt="product.title"
+    >
+    <!-- CIRCLE BTN -->
+    <button
+      type="button"
+      class="2k:hidden btn btn--circle btn--primary btn--primary__circle btn--primary__circle--fill z-5 absolute bottom-3 right-3"
+      aria-label="Open quick order popup"
+      @click.prevent="$store.quickOrder.show({ id: '{{ id }}', initiator: 'section' })"
+    >
+      <span>
+        {% render 'icon', name: 'plus' %}
+      </span>
+    </button>
+    <!-- PILL BTN -->
+    <button
+      type="button"
+      class="btn btn--sm btn--pill btn--primary btn--primary__pill btn--primary__pill--fill 2k:flex z-5 absolute bottom-3 right-3 hidden"
+      aria-label="Open quick order"
+      @click.prevent="$store.quickOrder.show({ id: '{{ id }}', initiator: 'section' })"
+    >
+      <span>{{ quick_add_btn_text }}</span>
+    </button>
+  </a>
+  <div class="flex h-full flex-col pb-5 pt-4 {{ card_content }}">
+    <!-- REVIEWS RATING START -->
+    {% assign rating_value = product.metafields.reviews.rating.value | default: 3.5 %}
+    {% assign rounded_rating_value = rating_value | round %}
+    {% assign width = rounded_rating_value | minus: rating_value | times: 100 %}
+    {% assign style = 'width: ' | append: width | append: '%' %}
+    <div class="text-sc-subtitle mb-2 flex w-max items-center space-x-0.5">
+      {% for i in (1..rounded_rating_value) %}
+        <div
+          {% if forloop.last %}
+            class="relative overflow-hidden"
+            style="width: {{ width }}%;"
+          {% endif %}
+        >
+          {% render 'icon', name: 'star', class: 'shrink-0' %}
+        </div>
+      {% endfor %}
+    </div>
+    <!-- REVIEWS RATING END -->
+
+    <!-- TITLE -->
+    <a
+      :href="selectedVariant.link"
+      aria-label="Redirect to {{ product.title }}"
+      x-text="product.title"
+      class="mb-1 text-sm font-medium"
+    ></a>
+
+    <!-- PRICE -->
+    <div class="flex items-center">
+      <s
+        class="text-sc-body-primary mr-1 text-xs"
+        x-show="selectedVariant.compare_at_price > selectedVariant.price"
+        x-text="window.currency(selectedVariant.compare_at_price)"
+      >
+      </s>
+      <span
+        class="price text-sc-title text-sm"
+        :class="selectedVariant.compare_at_price > selectedVariant.price && 'text-[#E34F4F]'"
+        :value="selectedVariant.price"
+        x-text="window.currency(selectedVariant.price)"
+      >
+      </span>
+    </div>
+
+    <!-- OPTIONS -->
+    {% unless product.has_only_default_variant %}
+      <template x-for="(option, index) in productOptions">
+        <template x-if="option.name === 'Color'">
+          <div class="mt-2 flex items-center gap-1">
+            <template x-for="value in option.values">
+              <button
+                :aria-label="value"
+                class="option-color option-color--small"
+                :class="
+                  {
+                    active: selectedVariant.options.includes(value),
+                    unavailable: !product.variants.some(variant => variant.available && variant.options[index] === value) && index === 0 ||
+                      !product.variants.some(variant => variant.available && variant.option1 === selectedVariant.option1 && variant.options[index] === value) && index === 1 ||
+                      !product.variants.some(variant => variant.available && variant.option1 === selectedVariant.option1 && variant.option2 === selectedVariant.option2 && variant.options[index] === value) && index === 2
+                  }
+                "
+                type="button"
+                @click="
+                  changeVariant({
+                    name: option.name,
+                  }, value)
+                "
+              >
+                <span class="sr-only absolute" x-text="`Color swatch ${value}`"></span>
+                <div
+                  class="swatch"
+                  :data-color-swatch="window.handleize(value)"
+                ></div>
+              </button>
+            </template>
+          </div>
+        </template>
+      </template>
+    {% endunless %}
+  </div>
+  {% render 'quick-order', product: product, id: id %}
+  {% render 'product-json', product: product %}
+</article>
