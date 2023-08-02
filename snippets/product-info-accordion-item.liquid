@@ -1,0 +1,22 @@
+{% assign class = class | default: 'border-b border-gray-200 pb-5' %}
+
+<div class="{{ class }}">
+  <button
+    type="button"
+    class="text-sc-title flex w-full items-center justify-between text-base font-medium"
+    @click="active === {{ active }} ? active = null : active = {{ active }}"
+  >
+    <span>{{ title }}</span>
+    <div x-show="active !== {{ active }}">
+      {% render 'icon', name: 'plus-bold', class: 'smD:hover:opacity-70' %}
+    </div>
+    <div x-show="active === {{ active }}">
+      {% render 'icon', name: 'minus-bold', class: 'smD:hover:opacity-70' %}
+    </div>
+  </button>
+  <div x-show="active === {{ active }}" x-collapse>
+    <div class="text-sc-body-primary rte pt-3 text-base">
+      {{ content }}
+    </div>
+  </div>
+</div>
