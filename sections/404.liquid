@@ -1,0 +1,320 @@
+{% liquid
+  assign section_anchor_id = section.settings.section_anchor_id | handleize
+  assign color_scheme = section.settings.color_scheme
+
+  assign image = section.settings.image
+  assign image_tab = section.settings.image_tab | default: image
+  assign image_mob = section.settings.image_mob | default: image_tab
+  assign image_size = section.settings.image_size
+  case image_size
+    when 'small'
+      assign img_size = 'min-h-[270px] md:min-h-[550px]'
+    when 'medium'
+      assign img_size = 'min-h-[295px] md:min-h-[600px]'
+    when 'large'
+      assign img_size = 'min-h-[340px] md:min-h-[650px]'
+  endcase
+
+  assign headline = section.settings.headline
+  assign subtitle = section.settings.subtitle
+  assign text = section.settings.text
+
+  assign blocks = section.blocks
+
+  assign pt_mob = section.settings.pt_mob
+  assign pb_mob = section.settings.pb_mob
+  assign pt_tab = section.settings.pt_tab
+  assign pb_tab = section.settings.pb_tab
+  assign pt_desk = section.settings.pt_desk
+  assign pb_desk = section.settings.pb_desk
+%}
+
+{% render 'section-paddings',
+  section_id: section.id,
+  pt_mob: pt_mob,
+  pb_mob: pb_mob,
+  pt_tab: pt_tab,
+  pb_tab: pb_tab,
+  pt_desk: pt_desk,
+  pb_desk: pb_desk
+%}
+
+<div
+  id="{{ section_anchor_id }}"
+  data-section-id="{{ section.id }}"
+  class="color-scheme-{{ color_scheme }} bg-sc-bg-primary bg-primary-gradient"
+>
+  <div
+    class="smD:grid smD:grid-cols-2 2k:max-w-[1640px] smD:gap-x-15 smD:grid-cols-[minmax(0,500px)_minmax(0,1fr)] 2k:grid-cols-[minmax(0,550px)_minmax(0,1fr)] container 2xl:max-w-[1308px] 2xl:grid-cols-[minmax(0,1fr)_minmax(0,550px)]"
+  >
+    <div class="smD:py-10 2xl:py-15 2xl:pl-25 md:px-15 2k:order-none smD:my-auto smD:pl-20 smD:px-0 2k:pl-0 2xl:order-1">
+      {% if headline %}
+        <div class="mb-3 overflow-hidden">
+          <h3
+            class="animate__animated text-sc-title font-primary 2k:text-9xl text-7xl font-medium opacity-0"
+            x-intersect="$el.classList.add('animate__fadeInUp')"
+          >
+            {{- headline -}}
+          </h3>
+        </div>
+      {% endif %}
+
+      {% if subtitle %}
+        <div class="mb-5 overflow-hidden">
+          <div
+            class="animate__animated eag-delay-300ms rte text-sc-body-primary font-primary 2k:text-3xl text-2xl opacity-0"
+            x-intersect="$el.classList.add('animate__fadeInUp')"
+          >
+            {{- subtitle -}}
+          </div>
+        </div>
+      {% endif %}
+
+      {% if text %}
+        <div class="overflow-hidden">
+          <div
+            class="animate__animated eag-delay-600ms rte text-sc-body-primary 2k:text-xl text-lg opacity-0"
+            x-intersect="$el.classList.add('animate__fadeInUp')"
+          >
+            {{- text -}}
+          </div>
+        </div>
+      {% endif %}
+
+      {% if blocks.size > 0 %}
+        <div class="mt-10 flex flex-col space-y-5">
+          {% for block in blocks %}
+            {% assign button_url = block.settings.button_url %}
+            {% assign button_text = block.settings.button_text %}
+            {% assign button_type = block.settings.button_type %}
+
+            {% if button_text != blank %}
+              <a
+                href="{{ button_url }}"
+                class="animate__animated opacity-0 eag-delay-{{- forloop.index -}}00ms {% render 'btn-class', btn: button_type %} w-max max-w-full"
+                aria-label="{{ button_text }}"
+                x-intersect="$el.classList.add('animate__fadeInLeft')"
+              >
+                <span>
+                  {{- button_text -}}
+                </span>
+              </a>
+            {% endif %}
+          {% endfor %}
+        </div>
+      {% endif %}
+    </div>
+    <div class="animate__animated md:mt-15 smD:mt-0 mt-8 opacity-0" x-intersect="$el.classList.add('animate__fadeIn')">
+      {% assign img_class = img_size | append: ' h-full w-full object-cover object-center' %}
+      {% if image %}
+        <picture>
+          <source srcset="{{ image | image_url: width: 2000 }}" media="(min-width: 1150px)">
+          <source srcset="{{ image_tab | image_url: width: 1150 }}" media="(min-width: 740px)">
+          <source srcset="{{ image_mob | image_url: width: 740 }}" media="(max-width: 740px)">
+          <img
+            class="{{ img_class }}"
+            src="{{ image | image_url: width: 2000 }}"
+            alt="{{ image.alt | escape }}"
+          >
+        </picture>
+      {% else %}
+        {{ 'lifestyle-2' | placeholder_svg_tag: img_class }}
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "404 page",
+  "tag": "section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "section_anchor_id",
+      "label": "Section anchor id",
+      "default": "404 page"
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "Color scheme"
+    },
+    {
+      "type": "header",
+      "content": "Content settings"
+    },
+    {
+      "type": "header",
+      "content": "Image settings"
+    },
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "Desktop image"
+    },
+    {
+      "type": "image_picker",
+      "id": "image_tab",
+      "label": "Tablet image (optional)"
+    },
+    {
+      "type": "image_picker",
+      "id": "image_mob",
+      "label": "Mobile image (optional)"
+    },
+    {
+      "type": "select",
+      "id": "image_size",
+      "label": "Image height",
+      "options": [
+        {
+          "value": "small",
+          "label": "Small"
+        },
+        {
+          "value": "medium",
+          "label": "Medium"
+        },
+        {
+          "value": "large",
+          "label": "Large"
+        }
+      ],
+      "default": "medium",
+      "info": "aspect ratio 3:2"
+    },
+    {
+      "type": "text",
+      "id": "headline",
+      "label": "Section headline",
+      "default": "404."
+    },
+    {
+      "type": "richtext",
+      "id": "subtitle",
+      "label": "Section subtitle",
+      "default": "<p>Oooooooooooops!</p>"
+    },
+    {
+      "type": "richtext",
+      "id": "text",
+      "label": "Section text",
+      "default": "<p>Looks like you've taken a wrong turn. Explore these pages instead.</p>"
+    },
+    {
+      "type": "header",
+      "content": "Padding Y settings"
+    },
+    {
+      "type": "number",
+      "id": "pt_mob",
+      "label": "Mobile padding top in px",
+      "default": 0
+    },
+    {
+      "type": "number",
+      "id": "pb_mob",
+      "label": "Mobile padding bottom in px",
+      "default": 0
+    },
+    {
+      "type": "number",
+      "id": "pt_tab",
+      "label": "Tablet padding top in px",
+      "default": 0
+    },
+    {
+      "type": "number",
+      "id": "pb_tab",
+      "label": "Tablet padding bottom in px",
+      "default": 0
+    },
+    {
+      "type": "number",
+      "id": "pt_desk",
+      "label": "Desktop padding top in px",
+      "default": 0
+    },
+    {
+      "type": "number",
+      "id": "pb_desk",
+      "label": "Desktop padding bottom in px",
+      "default": 0
+    }
+  ],
+  "blocks": [
+    {
+      "type": "block",
+      "name": "Link",
+      "settings": [
+        {
+          "type": "url",
+          "id": "button_url",
+          "label": "Section button url"
+        },
+        {
+          "type": "text",
+          "id": "button_text",
+          "label": "Section button text",
+          "default": "Button text"
+        },
+        {
+          "type": "select",
+          "id": "button_type",
+          "label": "Section button type",
+          "options": [
+            {
+              "value": "btn_primary_main_fill",
+              "label": "main primary fill"
+            },
+            {
+              "value": "btn_secondary_main_fill",
+              "label": "main secondary fill"
+            },
+            {
+              "value": "btn_primary_main_outline",
+              "label": "main primary outline"
+            },
+            {
+              "value": "btn_secondary_main_outline",
+              "label": "main secondary outline"
+            },
+            {
+              "value": "btn_primary_pill_fill",
+              "label": "pill primary fill"
+            },
+            {
+              "value": "btn_secondary_pill_fill",
+              "label": "pill secondary fill"
+            },
+            {
+              "value": "btn_primary_pill_outline",
+              "label": "pill primary outline"
+            },
+            {
+              "value": "btn_secondary_pill_outline",
+              "label": "pill secondary outline"
+            },
+            {
+              "value": "link_primary",
+              "label": "Link primary"
+            },
+            {
+              "value": "link_secondary",
+              "label": "Link secondary"
+            }
+          ],
+          "default": "link_primary"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "404 page",
+      "category": "Repeatable"
+    }
+  ]
+}
+{% endschema %}
