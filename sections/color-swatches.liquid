@@ -1,0 +1,43 @@
+{% assign blocks = section.blocks %}
+<!-- COLOR SWATCHES -->
+<style>
+  {% for block in blocks %}
+    [data-color-swatch="{{ block.settings.title | strip | downcase | handleize }}"] {
+      background-size: cover;
+      background-color: {{ block.settings.swatch_color }};
+      {% if block.settings.swatch_image != blank %}
+        background-image: url("{{ block.settings.swatch_image | img_url: '100x' }}");
+      {%endif%}
+    }
+  {%endfor%}
+</style>
+{% schema %}
+{
+  "name": "COLOR SWATCHES",
+  "settings": [],
+  "blocks": [
+    {
+      "type": "color_swatch",
+      "name": "Variant color swatch",
+      "settings": [
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Variant color name",
+          "info": "[How to get variant color name](https://www.loom.com/share/f70a32207d024defa27d184889f9bbb1)"
+        },
+        {
+          "type": "color",
+          "id": "swatch_color",
+          "label": "Swatch color"
+        },
+        {
+          "type": "image_picker",
+          "id": "swatch_image",
+          "label": "Swatch image"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}
