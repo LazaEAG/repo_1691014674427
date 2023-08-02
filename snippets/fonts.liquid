@@ -1,0 +1,66 @@
+{% comment %}
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  Font format name mapping:
+      Web Open Font Format => woff
+      Web Open Font Format 2 => woff2
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  Font weight name mapping:
+      Thin (Hairline)           => 100
+      Extra Light (Ultra Light) => 200
+      Light                     => 300
+      Normal (Regular)          => 400
+      Medium                    => 500
+      Semi Bold (Demi Bold)     => 600
+      Bold                      => 700
+      Extra Bold (Ultra Bold)   => 800
+      Black (Heavy)             => 900
+      Extra Black (Ultra Black) => 950
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{% endcomment %}
+
+<style>
+  /* FONT'S FROM SHOPIFY LIBRARY */
+  {% assign font_primary = settings.font_primary %}
+  {% assign font_secondary = settings.font_secondary %}
+  {% assign font_primary_medium = font_primary | font_modify: 'weight', '500' %}
+  {% assign font_secondary_medium = font_secondary | font_modify: 'weight', '500' %}
+
+  {{ font_primary | font_face: font_display: 'fallback' }}
+  {{ font_secondary | font_face: font_display: 'fallback' }}
+  /* medium weight */
+  {{ font_primary_medium | font_face: font_display: 'fallback' }}
+  {{ font_secondary_medium | font_face: font_display: 'fallback' }}
+
+  /*
+    IF YOU NEED USE CUSTOM, DONT FORGET CREATE CUSTOM STRUCTURE
+    without any quotes
+    --font-primary: Untitled Sans, sans-serif;
+    --font-secondary: MyFont, sans-serif;
+  */
+  :root {
+    --font-primary: {{ settings.font_primary.family }}, {{ settings.font_primary.fallback_families }};
+    --font-secondary: {{ settings.font_secondary.family }}, {{ settings.font_secondary.fallback_families }};
+  }
+  /* EXAMPLE HOW ADD CUSTOM FONT */
+  {% comment %}
+  /* FONT "Untitled Sans" START */
+  @font-face {
+    font-family: 'Untitled Sans';
+    font-style: normal;
+    font-weight: 400;
+    src: url('{{ 'untitled-sans-web-regular.woff2' | asset_url }}') format('woff2'),
+    url('{{ 'untitled-sans-web-regular.woff' | asset_url }}') format('woff');
+    font-display: fallback;
+  }
+
+  @font-face {
+    font-family: 'Untitled Sans';
+    font-style: normal;
+    font-weight: 500;
+    src: url('{{ 'untitled-sans-web-medium.woff2' | asset_url }}') format('woff2'),
+    url('{{ 'untitled-sans-web-medium.woff' | asset_url }}') format('woff');
+    font-display: fallback;
+  }
+  /* FONT "Untitled Sans" END */
+  {% endcomment %}
+</style>
