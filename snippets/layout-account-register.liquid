@@ -1,0 +1,92 @@
+<h2 class="font-primary smD:text-5xl text-sc-title mb-6 text-3xl font-medium md:text-4xl 2xl:text-5xl">
+  {{ 'customer.register.sign_up' | t }}
+</h2>
+
+<div class="text-sc-body-primary mb-5 text-base">
+  {{ 'customer.register.register_text' | t }}
+</div>
+
+<form @submit.prevent="registerFormSubmit()">
+  <div x-show="statusState" data-status-paste class="mb-4"></div>
+
+  <div class="mb-3 grid grid-cols-2 gap-3 md:grid-cols-1">
+    {% assign placeholder = 'customer.register.first_name' | t %}
+    {%- render 'input',
+      name: 'customer[first_name]',
+      label: placeholder,
+      type: 'text',
+      required: true,
+      autocomplete: 'given-name',
+      x_model: 'firstName',
+      x_input: 'clearStatus()'
+    -%}
+
+    {% assign placeholder = 'customer.register.last_name' | t %}
+    {%- render 'input',
+      name: 'customer[last_name]',
+      label: placeholder,
+      type: 'text',
+      required: true,
+      autocomplete: 'family-name',
+      x_model: 'lastName',
+      x_input: 'clearStatus()'
+    -%}
+  </div>
+
+  {% assign placeholder = 'customer.register.email' | t %}
+  {%- render 'input',
+    name: 'customer[email]',
+    label: placeholder,
+    type: 'text',
+    required: true,
+    autocomplete: 'email',
+    x_model: 'email',
+    x_input: 'clearStatus()',
+    class: 'mb-3'
+  -%}
+
+  {% assign placeholder = 'customer.register.password' | t %}
+  {%- render 'input',
+    name: 'customer[password]',
+    label: placeholder,
+    type: 'password',
+    required: true,
+    autocomplete: 'password',
+    x_model: 'password',
+    x_input: 'clearStatus()'
+  -%}
+
+  <div class="md:mt-7.5 mt-5 flex flex-col">
+    <button
+      type="submit"
+      :aria-busy="loading"
+      class="w-full md:min-h-[52px] md:text-lg {% render 'btn-class', btn: 'btn_primary_pill_fill' %}"
+    >
+      <span>{{ 'customer.register.title' | t }}</span>
+      {% render 'btn-loader' %}
+    </button>
+
+    {% if cancel_btn %}
+      <button
+        type="button"
+        class="w-max mx-auto mt-3 md:mt-7.5 max-w-full {% render 'btn-class', btn: 'link_primary' %}"
+      >
+        <span>{{ 'customer.login.cancel' | t }}</span>
+      </button>
+    {% endif %}
+
+    <div class="md:mt-7.5 border-sc-title/20 pt-7.5 mt-5 flex w-full w-full space-x-2 border-t">
+      <span class="text-sc-title text-base">{{ 'customer.login.have_an_account' | t }}</span>
+      <button
+        {% if request.page_type contains 'customers/' %}
+          @click.prevent="login_tab = 'login'; changeUrl('/account/login')"
+        {% else %}
+          @click.prevent="login_tab = 'login'"
+        {% endif %}
+        class="w-max max-w-full text-base {% render 'btn-class', btn: 'link_primary' %}"
+      >
+        <span class="text-base">{{ 'customer.login.sign_in' | t }}</span>
+      </button>
+    </div>
+  </div>
+</form>
