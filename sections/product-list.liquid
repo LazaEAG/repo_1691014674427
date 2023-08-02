@@ -1,0 +1,372 @@
+<!-- product-list.liquid -->
+{% liquid
+  assign section_anchor_id = section.settings.section_anchor_id | handleize
+  assign color_scheme = section.settings.color_scheme
+
+  assign layout = section.settings.layout
+  assign collection = section.settings.collection
+  assign product_list = section.settings.product_list
+  assign limit = section.settings.limit
+  assign products_per_row_mobile = section.settings.products_per_row_mobile
+  assign products_per_row_desktop = section.settings.products_per_row_desktop
+  assign quick_add_btn_text = section.settings.quick_add_btn_text
+
+  case products_per_row_mobile
+    when '1'
+      assign grid = 'grid-cols-1 md:grid-cols-3'
+    when '2'
+      assign grid = 'grid-cols-2 md:grid-cols-3'
+  endcase
+
+  case products_per_row_desktop
+    when '3'
+      assign grid = grid | append: ' 2xl:grid-cols-3'
+    when '4'
+      assign grid = grid | append: ' 2xl:grid-cols-4'
+    when '5'
+      assign grid = grid | append: ' 2xl:grid-cols-5'
+  endcase
+
+  assign products = product_list | default: collection.products
+
+  assign button_url = section.settings.button_url
+  assign button_text = section.settings.button_text
+  assign button_type = section.settings.button_type
+
+  assign content_align = section.settings.content_align
+  assign show_bg = section.settings.show_bg
+  assign show_atc = section.settings.show_atc
+
+  assign pt_mob = section.settings.pt_mob
+  assign pb_mob = section.settings.pb_mob
+  assign pt_tab = section.settings.pt_tab
+  assign pb_tab = section.settings.pb_tab
+  assign pt_desk = section.settings.pt_desk
+  assign pb_desk = section.settings.pb_desk
+%}
+
+{% render 'section-paddings',
+  section_id: section.id,
+  pt_mob: pt_mob,
+  pb_mob: pb_mob,
+  pt_tab: pt_tab,
+  pb_tab: pb_tab,
+  pt_desk: pt_desk,
+  pb_desk: pb_desk
+%}
+
+<div
+  id="{{ section_anchor_id }}"
+  data-section-id="{{ section.id }}"
+  class="color-scheme-{{ color_scheme }} bg-sc-bg-primary bg-primary-gradient overflow-hidden"
+>
+  <div class="container">
+    {% if layout == 'grid' %}
+      <div
+        class="animate__animated opacity-0 grid {{ grid }} gap-2.5"
+        x-intersect="$el.classList.add('animate__fadeIn')"
+      >
+        {% for product in products limit: limit %}
+          {% render 'product-card',
+            product: product,
+            content_align: content_align,
+            show_bg: show_bg,
+            show_atc: show_atc
+          %}
+        {% else %}
+          {%- for i in (1..limit) -%}
+            {%- capture placeholder_image -%}product-{% cycle '1', '2', '3', '4', '5', '6' %}{%- endcapture -%}
+            {%- render 'product-card-placeholder',
+              placeholder_image: placeholder_image,
+              content_align: content_align,
+              show_bg: show_bg,
+              show_atc: show_atc
+            -%}
+          {%- endfor -%}
+        {% endfor %}
+      </div>
+    {% elsif layout == 'slider' %}
+      <div
+        class="animate__animated swiper overflow-visible opacity-0"
+        x-ignore
+        ax-load
+        x-data="swiperSlider($el, 'multicolumn_slider')"
+        x-intersect="$el.classList.add('animate__fadeIn')"
+      >
+        <div class="swiper-wrapper">
+          {% for product in products limit: limit %}
+            <div class="swiper-slide h-auto max-w-[270px] md:max-w-[300px] 2xl:max-w-[400px]">
+              {% render 'product-card',
+                product: product,
+                content_align: content_align,
+                show_bg: show_bg,
+                show_atc: show_atc,
+                class: 'h-full'
+              %}
+            </div>
+          {% else %}
+            {%- for i in (1..limit) -%}
+              {%- capture placeholder_image -%}product-{% cycle '1', '2', '3', '4', '5', '6' %}{%- endcapture -%}
+              <div class="swiper-slide h-auto max-w-[270px] md:max-w-[300px] 2xl:max-w-[400px]">
+                {%- render 'product-card-placeholder',
+                  placeholder_image: placeholder_image,
+                  content_align: content_align,
+                  show_bg: show_bg,
+                  show_atc: show_atc,
+                  class: 'h-full'
+                -%}
+              </div>
+            {%- endfor -%}
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+
+    {% if button_text != blank %}
+      <a
+        href="{{ button_url }}"
+        class="{% render 'btn-class', btn: button_type %} mx-auto mt-10"
+        aria-label="{{ button_text }}"
+      >
+        <span>
+          {{- button_text -}}
+        </span>
+      </a>
+    {% endif %}
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Product list",
+  "tag": "section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "section_anchor_id",
+      "label": "Section anchor id",
+      "default": "Product list"
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "Color scheme"
+    },
+    {
+      "type": "select",
+      "id": "layout",
+      "label": "Layout type",
+      "options": [
+        {
+          "value": "grid",
+          "label": "Grid"
+        },
+        {
+          "value": "slider",
+          "label": "Slider"
+        }
+      ],
+      "default": "grid"
+    },
+    {
+      "type": "collection",
+      "id": "collection",
+      "label": "Collection"
+    },
+    {
+      "type": "product_list",
+      "id": "product_list",
+      "label": "Products",
+      "info": "Replaces collection when selected."
+    },
+    {
+      "type": "number",
+      "id": "limit",
+      "label": "Products limit",
+      "default": 6
+    },
+    {
+      "type": "select",
+      "id": "products_per_row_mobile",
+      "label": "Products per row (mobile)",
+      "options": [
+        {
+          "value": "1",
+          "label": "1"
+        },
+        {
+          "value": "2",
+          "label": "2"
+        }
+      ],
+      "default": "2"
+    },
+    {
+      "type": "select",
+      "id": "products_per_row_desktop",
+      "label": "Products per row (desktop)",
+      "options": [
+        {
+          "value": "3",
+          "label": "3"
+        },
+        {
+          "value": "4",
+          "label": "4"
+        },
+        {
+          "value": "5",
+          "label": "5"
+        }
+      ],
+      "default": "4"
+    },
+    {
+      "type": "header",
+      "content": "Section button settings"
+    },
+    {
+      "type": "url",
+      "id": "button_url",
+      "label": "Section button url"
+    },
+    {
+      "type": "text",
+      "id": "button_text",
+      "label": "Section button text",
+      "default": "Button text"
+    },
+    {
+      "type": "select",
+      "id": "button_type",
+      "label": "Section button type",
+      "options": [
+        {
+          "value": "btn_primary_main_fill",
+          "label": "main primary fill"
+        },
+        {
+          "value": "btn_secondary_main_fill",
+          "label": "main secondary fill"
+        },
+        {
+          "value": "btn_primary_main_outline",
+          "label": "main primary outline"
+        },
+        {
+          "value": "btn_secondary_main_outline",
+          "label": "main secondary outline"
+        },
+        {
+          "value": "btn_primary_pill_fill",
+          "label": "pill primary fill"
+        },
+        {
+          "value": "btn_secondary_pill_fill",
+          "label": "pill secondary fill"
+        },
+        {
+          "value": "btn_primary_pill_outline",
+          "label": "pill primary outline"
+        },
+        {
+          "value": "btn_secondary_pill_outline",
+          "label": "pill secondary outline"
+        },
+        {
+          "value": "link_primary",
+          "label": "Link primary"
+        },
+        {
+          "value": "link_secondary",
+          "label": "Link secondary"
+        }
+      ]
+    },
+    {
+      "type": "header",
+      "content": "Card settings"
+    },
+    {
+      "type": "select",
+      "id": "content_align",
+      "label": "Card content align",
+      "options": [
+        {
+          "value": "left",
+          "label": "Left"
+        },
+        {
+          "value": "center",
+          "label": "Center"
+        }
+      ],
+      "default": "left"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_bg",
+      "label": "Show background",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_atc",
+      "label": "Show quick order",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "Padding Y settings"
+    },
+    {
+      "type": "number",
+      "id": "pt_mob",
+      "label": "Mobile padding top in px",
+      "default": 0
+    },
+    {
+      "type": "number",
+      "id": "pb_mob",
+      "label": "Mobile padding bottom in px",
+      "default": 0
+    },
+    {
+      "type": "number",
+      "id": "pt_tab",
+      "label": "Tablet padding top in px",
+      "default": 0
+    },
+    {
+      "type": "number",
+      "id": "pb_tab",
+      "label": "Tablet padding bottom in px",
+      "default": 0
+    },
+    {
+      "type": "number",
+      "id": "pt_desk",
+      "label": "Desktop padding top in px",
+      "default": 0
+    },
+    {
+      "type": "number",
+      "id": "pb_desk",
+      "label": "Desktop padding bottom in px",
+      "default": 0
+    },
+    {
+      "type": "text",
+      "id": "quick_add_btn_text",
+      "label": "Quick add btn text",
+      "default": "Quick add"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Product list",
+      "category": "Repeatable"
+    }
+  ]
+}
+{% endschema %}
