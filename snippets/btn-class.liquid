@@ -1,0 +1,136 @@
+{%- capture result -%}
+  {% comment %}
+    DESCIPTION:
+      group: 'btn' or 'link'
+      variant: 'primary' or 'secondary'
+      type: 'main', 'pill', 'circle'
+      modification: 'fill', 'outline'
+
+    PARAMS:
+      btn: abstract value 'group_variant_type_modification', example value 'btn_primary_main_fill'
+
+    HOW TO USE:
+      <a class="{% render 'btn-class', btn: btn %}">
+        <span>Btn Text</span>
+      </a>
+    CHECK SHEMA BELOW
+
+  {% endcomment %}
+
+  {% assign keys = btn | split: '_' %}
+  {% assign group = keys[0] %}
+  {% assign variant = keys[1] %}
+  {% assign type = keys[2] %}
+  {% assign modification = keys[3] %}
+
+  {% case group %}
+    {% when 'btn' %}
+      {% case variant %}
+        {% when 'primary' %}
+          {% case type %}
+            {% when 'main' %}
+              {% case modification %}
+                {% when 'fill' %}
+                  btn btn--main btn--primary btn--primary__main btn--primary__main--fill btn--sm md:btn--md smD:btn--smD 2xl:btn--2xl 2k:btn--2k
+                {% when 'outline' %}
+                  btn btn--main btn--primary btn--primary__main btn--primary__main--outline btn--sm md:btn--md smD:btn--smD 2xl:btn--2xl 2k:btn--2k
+              {% endcase %}
+            {% when 'pill' %}
+              {% case modification %}
+                {% when 'fill' %}
+                  btn btn--pill btn--primary btn--primary__pill btn--primary__pill--fill btn--sm md:btn--md smD:btn--smD 2xl:btn--2xl 2k:btn--2k
+                {% when 'outline' %}
+                  btn btn--pill btn--primary btn--primary__pill btn--primary__pill--outline btn--sm md:btn--md smD:btn--smD 2xl:btn--2xl 2k:btn--2k
+              {% endcase %}
+            {% when 'circle' %}
+              {% case modification %}
+                {% when 'fill' %}
+                  btn btn--circle btn--primary btn--primary__circle btn--primary__circle--fill
+                {% when 'outline' %}
+                  btn btn--circle btn--primary btn--primary__circle btn--primary__circle--outline
+              {% endcase %}
+          {% endcase %}
+        {% when 'secondary' %}
+          {% case type %}
+            {% when 'main' %}
+              {% case modification %}
+                {% when 'fill' %}
+                  btn btn--main btn--secondary btn--secondary__main btn--secondary__main--fill btn--sm md:btn--md smD:btn--smD 2xl:btn--2xl 2k:btn--2k
+                {% when 'outline' %}
+                  btn btn--main btn--secondary btn--secondary__main btn--secondary__main--outline btn--sm md:btn--md smD:btn--smD 2xl:btn--2xl 2k:btn--2k
+              {% endcase %}
+            {% when 'pill' %}
+              {% case modification %}
+                {% when 'fill' %}
+                  btn btn--pill btn--secondary btn--secondary__pill btn--secondary__pill--fill btn--sm md:btn--md smD:btn--smD 2xl:btn--2xl 2k:btn--2k
+                {% when 'outline' %}
+                  btn btn--pill btn--secondary btn--secondary__pill btn--secondary__pill--outline btn--sm md:btn--md smD:btn--smD 2xl:btn--2xl 2k:btn--2k
+              {% endcase %}
+            {% when 'circle' %}
+              {% case modification %}
+                {% when 'fill' %}
+                  btn btn--circle btn--secondary btn--secondary__circle btn--secondary__circle--fill
+                {% when 'outline' %}
+                  btn btn--circle btn--secondary btn--secondary__circle btn--secondary__circle--outline
+              {% endcase %}
+          {% endcase %}
+      {% endcase %}
+    {% when 'link' %}
+      {% case variant %}
+        {% when 'primary' %}
+          link btn-link-anim link--primary link--sm md:link--md smD:link--smD 2xl:link--2xl 2k:link--2k
+        {% when 'secondary' %}
+          link btn-link-anim link--secondary link--sm md:link--md smD:link--smD 2xl:link--2xl 2k:link--2k
+      {% endcase %}
+  {% endcase %}
+  {% comment %}
+    SCHEMA:
+    {
+      "type": "select",
+      "id": "btn",
+      "label": "Select button type",
+      "options": [
+        {
+          "value": "btn_primary_main_fill",
+          "label": "main primary fill"
+        },
+        {
+          "value": "btn_secondary_main_fill",
+          "label": "main secondary fill"
+        },
+        {
+          "value": "btn_primary_main_outline",
+          "label": "main primary outline"
+        },
+        {
+          "value": "btn_secondary_main_outline",
+          "label": "main secondary outline"
+        },
+        {
+          "value": "btn_primary_pill_fill",
+          "label": "pill primary fill"
+        },
+        {
+          "value": "btn_secondary_pill_fill",
+          "label": "pill secondary fill"
+        },
+        {
+          "value": "btn_primary_pill_outline",
+          "label": "pill primary outline"
+        },
+        {
+          "value": "btn_secondary_pill_outline",
+          "label": "pill secondary outline"
+        },
+        {
+          "value": "link_primary",
+          "label": "Link primary"
+        },
+        {
+          "value": "link_secondary",
+          "label": "Link secondary"
+        }
+      ]
+    }
+  {% endcomment %}
+{%- endcapture -%}{{ result | strip | strip_newlines }}
