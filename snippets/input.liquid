@@ -1,0 +1,110 @@
+{%- comment -%}
+  ----------------------------------------------------------------------------------------------------------------------
+  INPUT COMPONENT
+  ----------------------------------------------------------------------------------------------------------------------
+
+  This snippet generate an input (or a textarea text field if the "multiline" option is passed
+
+  ********************************************
+  Supported variables
+  ********************************************
+
+  * name: the HTML name attribute that is used when the field is submitted (required)
+  * type: the HTML type to use (such as "email", "password"...). If none is passed, "text" is assumed.
+  * value: the default value (if any) for the setting
+  * form: if specified, define the form ID linked to this input
+  * label: the label to show
+  * minlength: an optional min length for input
+  * maxlength: an optional max length for input
+  * required: if set to true, the "required" attribute is added to the input
+  * tabindex: set a custom tabindex attribute
+  * autocomplete: a hint to the browser for help autocompletion. List can be found here: https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/autocomplete#values
+  * autocapitalize: a hint for auto capitalization
+  * enterkeyhint: an optional hint for indicate the browser which button to show on the virtual keyboard
+{%- endcomment -%}
+
+{%- capture id -%}input-{{ section.id }}-{{ 'now' | date: '%N' }}{%- endcapture -%}
+
+{%- capture optional_attributes -%}
+  {% if form %}form="{{ form }}"{% endif %}
+  {% if value and multiline == blank %}value="{{ value }}"{% endif %}
+  {% if tabindex %}tabindex="{{ tabindex }}"{% endif %}
+  {% if minlength and minlength > 0 %}minlength="{{ minlength }}"{% endif %}
+  {% if maxlength and maxlength > 0 %}maxlength="{{ maxlength }}"{% endif %}
+  {% if autocomplete %}autocomplete="{{ autocomplete }}"{% endif %}
+  {% if autocapitalize %}autocapitalize="{{ autocapitalize }}"{% endif %}
+  {% if enterkeyhint %}enterkeyhint="{{ enterkeyhint }}"{% endif %}
+  {% if required %}data-rules='["required"{%- if name contains 'email' -%},"email"{%- elsif type contains 'password' -%},"minLength:8"{%- endif -%}{%- if name contains 'password_confirmation' -%},"matchingPassword"{%- endif -%}]'{% endif %}
+{%- endcapture -%}
+
+<div class="{{ class }}">
+  <div class="relative overflow-hidden text-left" {{ block.shopify_attributes }}>
+    {%- if multiline != blank -%}
+      <textarea
+        id="{{ id }}"
+        class="ring-sc-title/30 rounded-r-input text-sc-title peer w-full resize-none border-none bg-transparent p-4 pb-3 text-base outline-none ring-1 ring-inset duration-200 ease-in-out focus:ring-current"
+        is="textarea"
+        name="{{ name }}"
+        placeholder=" "
+        rows="{{ multiline }}"
+        {% if x_input or required %}
+          @input.debounce="invalidElements['{{ id }}'] = false; {{ x_input }}"
+          :class="{ '!text-c-accent-error !ring-c-accent-error': invalidElements['{{ id }}'] }"
+        {% endif %}
+        {{ optional_attributes -}}
+      >{{- value -}}</textarea>
+    {%- else -%}
+      <input
+        style="--input-height: {{ input_height | default: 48 }}px;"
+        id="{{ id }}"
+        class="
+          {%- if submit_input -%}pr-12{%- endif %}
+          {%- if input_bg -%}{{- input_bg -}}{%- else -%}bg-transparent{%- endif %}
+          rounded-r-input ring-sc-title/30 text-sc-title peer h-[var(--input-height)] w-full appearance-none border-none p-4 pb-3 text-base outline-none ring-1 ring-inset duration-200 ease-in-out focus:ring-current
+        "
+        type="{{ type | default: 'text' }}"
+        {% if type == 'email' or type == 'tel' %}
+          dir="ltr"
+        {% endif %}
+        name="{{ name }}"
+        placeholder=" "
+        {% if x_model %}
+          x-model="{{ x_model }}"
+        {% endif %}
+        {% if x_input or required %}
+          @input.debounce="invalidElements['{{ id }}'] = false; {{ x_input }}"
+          :class="{ '!text-c-accent-error !ring-c-accent-error': invalidElements['{{ id }}'] }"
+        {% endif %}
+        {{ optional_attributes }}
+      >
+      {% if submit_input %}
+        <button
+          aria-label="Submit form"
+          type="submit"
+          {% if required %}
+            :class="{ '!bg-c-accent-error': invalidElements['{{ id }}'] }"
+          {% endif %}
+          class="bg-sc-title/30 text-sc-title hover:bg-sc-title hover:text-sc-bg-primary absolute top-1/2 right-4 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full border-none duration-200 ease-in-out"
+        >
+          {% render 'icon', name: 'chevron', size: 'sm' %}
+        </button>
+      {% endif %}
+    {%- endif -%}
+
+    {%- if label != blank -%}
+      <label
+        for="{{ id }}"
+        {% if required %}
+          :class="{ '!text-c-accent-error': invalidElements['{{ id }}'] }"
+        {% endif %}
+        class="pointer-events-none absolute top-0 left-0 ml-4 grid {% if multiline %} h-auto pt-5 {% else %} h-full{% endif %} {% if submit_input %} w-[calc(100%-70px)]{% else %} w-[calc(100%-16px)]{% endif %} text-sc-body-primary origin-left items-center text-base opacity-50 duration-200 ease-in-out peer-focus:w-full peer-focus:-translate-y-[1rem] peer-focus:scale-[.65] peer-[&:not(:placeholder-shown)]:w-full peer-[&:not(:placeholder-shown)]:-translate-y-[1rem] peer-[&:not(:placeholder-shown)]:scale-[.65] peer-[&:placeholder-shown]:truncate"
+      >
+        {{- label -}}
+      </label>
+    {%- endif -%}
+  </div>
+
+  {%- if required -%}
+    {% render 'input-error-message', id: id, label: label, type: type, name: name %}
+  {%- endif -%}
+</div>
