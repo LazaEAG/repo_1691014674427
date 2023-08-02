@@ -1,0 +1,32 @@
+{%- capture id -%}id-{{ section.id }}-{{ 'now' | date: '%N' }}{%- endcapture -%}
+{% assign _product = product %}
+<div class="flex items-start" x-data="productCard()">
+  <div class="mr-3 max-w-[70px] shrink-0">
+    <a href="{{ _product.url }}">
+      {{
+        _product.featured_image
+        | image_url: width: 200
+        | image_tag: alt: product.featured_image.alt, class: 'object-contain w-full h-full', loading: 'lazy'
+      }}
+    </a>
+  </div>
+  <div class="w-full">
+    <h5 class="mb-1 flex w-full items-start justify-between">
+      <span class="font-primary break-words text-sm font-medium">{{ _product.title }}</span>
+      <button
+        @click.prevent="$store.quickOrder.show({ id: '{{ id }}', initiator: 'section' })"
+        class="btn btn--pill btn--primary btn--primary__pill btn--primary__pill--fill btn--small ml-2.5 shrink-0"
+      >
+        <span>Add +</span>
+      </button>
+    </h5>
+    {% unless _product.has_only_default_variant %}
+      <span class="text-sc-body-primary block text-xs">{{ _product.selected_or_first_available_variant.title }}</span>
+    {% endunless %}
+    <span class="text-sc-body-primary block text-sm">
+      {{- _product.selected_or_first_available_variant.price | money -}}
+    </span>
+  </div>
+  {% render 'quick-order', product: _product, id: id %}
+  {% render 'product-json', product: product %}
+</div>
