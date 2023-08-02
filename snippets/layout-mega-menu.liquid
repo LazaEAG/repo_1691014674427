@@ -1,0 +1,223 @@
+{% comment %}
+  PARAMS:
+    block => Mega menu items, check settings in 'header.liquid' file
+    menu_item => parent link object from nav list
+{% endcomment %}
+{% liquid
+  assign disable_links = block.settings.disable_links
+  assign mega_menu_layout = block.settings.mega_menu_layout
+%}
+{% case mega_menu_layout %}
+  {% when 'mega_menu_layout_main' %}
+    <div
+      data-mega-menu="{{ menu_item.title | handleize }}"
+      class="no-select-all bg-sc-bg-primary pb-15 invisible absolute top-full left-0 z-20 w-full border-t pt-10 opacity-0 shadow duration-500 hover:visible hover:opacity-100"
+    >
+      <div class="container">
+        <div class="narrow-container flex items-start justify-center">
+          {% if mega_menu_layout == 'mega_menu_layout_main' %}
+            {% unless disable_links == true %}
+              <!-- LINKS -->
+              <!-- CHANGE GRID COLS and GAPS HERE -->
+              <div class="grid-cols-3-max mr-20 grid gap-20">
+                {% for link in menu_item.links %}
+                  <div>
+                    {% if link.url == '#' %}
+                      <span class="text-sc-title mb-3 block text-lg font-medium">{{ link.title }}</span>
+                    {% else %}
+                      <a
+                        href="{{ link.url }}"
+                        class="text-sc-title btn-link-anim mb-3 block text-lg font-medium"
+                      >
+                        <span>{{ link.title }}</span>
+                      </a>
+                    {% endif %}
+                    <ul>
+                      {% for child_link in link.links %}
+                        <li class="text-sc-body-primary mb-3 text-base font-normal">
+                          <a href="{{ child_link.url }}" class="btn-link-anim">
+                            <span>{{ child_link.title }}</span>
+                          </a>
+                        </li>
+                      {% endfor %}
+                    </ul>
+                  </div>
+                {% endfor %}
+              </div>
+            {% endunless %}
+
+            <!-- FEATURED ITEMS -->
+            {% if disable_links == true %}
+              <div class="gap-7.5 grid grid-cols-4">
+                {% for i in (1..4) %}
+                  {% liquid
+                    assign product_key = 'product_' | append: i
+                    assign image_key = 'product_image_' | append: i
+                    assign title_key = 'product_title_' | append: i
+                    assign subtitle_key = 'product_subtitle_' | append: i
+
+                    assign product = block.settings[product_key]
+                    assign product_image = block.settings[image_key] | default: product.featured_image
+                    assign product_title = block.settings[title_key] | default: product.title
+                    assign product_subtitle = block.settings[subtitle_key]
+                  %}
+                  <div class="group flex h-auto flex-col items-center">
+                    <a
+                      href="{{ product.url }}"
+                      class="bg-sc-bg-secondary rounded-r-block image-overflow-hidden mb-2.5 block"
+                    >
+                      {% if product_image != blank %}
+                        {{
+                          product_image
+                          | image_url: width: 315
+                          | image_tag:
+                            loading: 'lazy',
+                            alt: product_image.alt,
+                            class: 'block object-contain object-center w-full h-full duration-200 group-hover:scale-105'
+                        }}
+                      {% endif %}
+                    </a>
+                    <h4 class="text-sc-title mb-1 mt-auto text-center text-base font-medium">
+                      {{ product_title }}
+                    </h4>
+                    <p class="text-sc-body-primary text-center text-sm">
+                      {{ product_subtitle }}
+                    </p>
+                  </div>
+                {% endfor %}
+              </div>
+            {% else %}
+              <div
+                x-ignore
+                ax-load
+                x-data="swiperSlider($el, 'mega_menu_cards')"
+                class="swiper no-select-all m-0 max-w-[460px] 2xl:max-w-[660px]"
+              >
+                <div class="swiper-wrapper items-baseline">
+                  {% for i in (1..4) %}
+                    {% liquid
+                      assign product_key = 'product_' | append: i
+                      assign image_key = 'product_image_' | append: i
+                      assign title_key = 'product_title_' | append: i
+                      assign subtitle_key = 'product_subtitle_' | append: i
+
+                      assign product = block.settings[product_key]
+                      assign product_image = block.settings[image_key] | default: product.featured_image
+                      assign product_title = block.settings[title_key] | default: product.title
+                      assign product_subtitle = block.settings[subtitle_key]
+                    %}
+                    <div class="swiper-slide flex h-auto flex-col items-center">
+                      <a
+                        href="{{ product.url }}"
+                        class="bg-sc-bg-secondary rounded-r-block image-overflow-hidden mb-2.5 block"
+                      >
+                        {% if product_image != blank %}
+                          {{
+                            product_image
+                            | image_url: width: 315
+                            | image_tag:
+                              loading: 'lazy',
+                              alt: product_image.alt,
+                              class: 'block object-contain object-center w-full h-full duration-200 hover:scale-105'
+                          }}
+                        {% endif %}
+                      </a>
+                      <h4 class="text-sc-title mb-1 mt-auto text-center text-base font-medium">
+                        {{ product_title }}
+                      </h4>
+                      <p class="text-sc-body-primary text-center text-sm">
+                        {{ product_subtitle }}
+                      </p>
+                    </div>
+                  {% endfor %}
+                </div>
+
+                <div class="group absolute top-0 left-0 bottom-0 z-10 w-10">
+                  <button
+                    @click.stop="$el.blur()"
+                    aria-label="Slide previous"
+                    class="slider-btn hover:text-sc-btn-primary-text-hover text-sc-btn-primary-text-default swiper-button-prev hover:bg-sc-btn-primary-bg-hover bg-sc-btn-primary-bg-default flex h-10 w-10 items-center justify-center rounded-full opacity-0 duration-200 after:hidden group-hover:opacity-100"
+                  >
+                    {% render 'icon', name: 'chevron', size: 'md', class: '-rotate-180' %}
+                  </button>
+                </div>
+                <div class="group absolute top-0 right-0 bottom-0 z-10 w-10">
+                  <button
+                    @click.stop="$el.blur()"
+                    aria-label="Slide next"
+                    class="slider-btn hover:text-sc-btn-primary-text-hover text-sc-btn-primary-text-default swiper-button-next hover:bg-sc-btn-primary-bg-hover bg-sc-btn-primary-bg-default flex h-10 w-10 items-center justify-center rounded-full opacity-0 duration-200 after:hidden group-hover:opacity-100"
+                  >
+                    {% render 'icon', name: 'chevron', size: 'md', class: '' %}
+                  </button>
+                </div>
+              </div>
+            {% endif %}
+          {% elsif mega_menu_layout == 'mega_menu_layout_links' %}
+            <ul class="space-x-7.5 flex items-center">
+              {% for link in menu_item.links %}
+                <li>
+                  <a
+                    class="text-sc-body-primary btn-link-anim text-base"
+                    href="{{ link.url }}"
+                  >
+                    <span>{{ link.title }}</span>
+                  </a>
+                </li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  {% when 'mega_menu_layout_links' %}
+    <div
+      data-mega-menu="{{ menu_item.title | handleize }}"
+      class="bg-sc-bg-primary invisible absolute top-full left-0 z-20 w-full border-t opacity-0 shadow duration-200 hover:visible hover:opacity-100"
+    >
+      <div class="container">
+        <div class="narrow-container">
+          <ul
+            class="mx-auto flex w-full max-w-max items-center justify-start space-x-10"
+          >
+            {% for child_link in menu_item.links %}
+              {% if child_link.url == '#' %}
+                <li class="link-with-list text-sc-body-primary relative py-5 text-lg font-normal">
+                  <button
+                    aria-haspopup="true"
+                    class="btn-link-anim pointer-events-none"
+                  >
+                    <span class="pb-1">{{ child_link.title }}</span>
+                  </button>
+                  <div
+                    data-links-dropdown
+                    class="{% if forloop.last %}right-0{% else %}left-0{% endif %} bg-sc-bg-primary absolute top-full max-h-0 overflow-hidden transition-all duration-300"
+                  >
+                    <ul
+                      class="w-full min-w-[200px] space-y-3 border py-10"
+                    >
+                      {% for link in child_link.links %}
+                        <li class="px-7.5 text-base">
+                          <a href="{{ link.url }}" class="btn-link-anim">
+                            <span class="pb-1">{{ link.title }}</span>
+                          </a>
+                        </li>
+                      {% endfor %}
+                    </ul>
+                  </div>
+                </li>
+              {% else %}
+                <li class="text-sc-body-primary py-5 text-lg font-normal">
+                  <a
+                    href="{{ child_link.url }}"
+                    class="btn-link-anim"
+                  >
+                    <span class="pb-1">{{ child_link.title }}</span>
+                  </a>
+                </li>
+              {% endif %}
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+{% endcase %}
