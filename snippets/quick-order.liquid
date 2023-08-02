@@ -1,0 +1,179 @@
+{% comment %}
+  PARAMS:
+    product => OBJECT shopify product object
+    id => STRING uniq
+{% endcomment %}
+
+<template x-if="$store.quickOrder.id === '{{ id }}'">
+  <template x-teleport="#quick-order-overlay">
+    <div
+      class="flex w-full flex-col"
+      x-data="
+        variantId ? productQuickOrder({
+          variantId
+        }) : productQuickOrder
+      "
+    >
+      <!-- QUICK ORDER HEADER -->
+      <div class="px-7.5 flex items-center justify-end border-t pt-5 md:px-6 md:pt-2.5">
+        <button
+          @click="$store.quickOrder.hide()"
+          class="text-sc-body-primary/30 hover:text-sc-body-primary"
+        >
+          <span class="sr-only">Close quick order popup</span>
+          {% render 'icon', name: 'close', class: 'duration-200 w-6 h-6 md:w-10 md:h-10' %}
+        </button>
+      </div>
+      <div
+        x-show="addedToCart"
+        x-transition
+        class="md:px-15 px-7.5 text-sc-subtitle bg-c-accent-success/30 mb-5 flex items-center py-3 text-sm font-medium"
+      >
+        {% render 'icon', name: 'alert', class: 'mr-1' %}
+        <span>Added to your cart!</span>
+      </div>
+      <!-- QUICK ORDER CONTENT -->
+      <div class="pb-7.5 md:pb-12.5 px-7.5 md:px-15 pt-5 md:pt-0">
+        <div class="mb-5 flex items-center">
+          <div class="mr-3 h-[80px] w-[80px] shrink-0 md:h-[120px] md:w-[120px]">
+            <img
+              class="h-full w-full object-contain"
+              :src="selectedVariant.featured_image ? selectedVariant.featured_image.src : product.featured_image"
+              :alt="product.title"
+            >
+          </div>
+          <div class="flex flex-col">
+            <span class="text-sc-title mb-2 inline-block text-base font-medium" x-text="product.title"></span>
+            <span class="text-sc-body-primary">
+              <s
+                x-show="selectedVariant.compare_at_price && selectedVariant.compare_at_price > selectedVariant.price"
+                x-text="window.currency(selectedVariant.compare_at_price)"
+                class="mr-1 text-sm"
+              ></s>
+              <span
+                x-text="window.currency(selectedVariant.price)"
+                class="text-base"
+              ></span>
+            </span>
+          </div>
+        </div>
+        <!-- OPTIONS -->
+        <div
+          x-show="productOptions.length > 1 && !addedToCart"
+        >
+          <!-- SEPARATOR -->
+          <div class="bg-sc-title/30 mb-5 h-px w-full"></div>
+
+          <template x-for="(option, index) in productOptions">
+            <div class="md:gap-7.5 flex flex-col gap-5">
+              <template x-if="option.name === 'Color'">
+                <div class="order-1 flex flex-col items-center">
+                  <div class="mb-3 space-x-1 text-base">
+                    <span x-text="`${option.name}:`" class="text-sc-body-primary"></span>
+                    <span x-text="selectedVariant[`option${option.position}`]" class="text-sc-subtitle"></span>
+                  </div>
+                  <div class="flex items-center gap-1">
+                    <template x-for="value in option.values">
+                      <button
+                        :aria-label="value"
+                        class="option-color"
+                        :class="
+                          {
+                            active: selectedVariant.options.includes(value),
+                            unavailable: !product.variants.some(variant => variant.available && variant.options[index] === value) && index === 0 ||
+                              !product.variants.some(variant => variant.available && variant.option1 === selectedVariant.option1 && variant.options[index] === value) && index === 1 ||
+                              !product.variants.some(variant => variant.available && variant.option1 === selectedVariant.option1 && variant.option2 === selectedVariant.option2 && variant.options[index] === value) && index === 2
+                          }
+                        "
+                        type="button"
+                        @click="
+                          changeVariant({
+                            name: option.name,
+                          }, value)
+                        "
+                      >
+                        <span class="sr-only absolute" x-text="`Color swatch ${value}`"></span>
+                        <div
+                          class="swatch"
+                          :data-color-swatch="window.handleize(value)"
+                        ></div>
+                      </button>
+                    </template>
+                  </div>
+                </div>
+              </template>
+
+              <template x-if="option.name !== 'Color'">
+                <div class="mb-7.5 flex flex-col items-center">
+                  <div class="mb-3 space-x-1 text-base">
+                    <span x-text="`${option.name}:`" class="text-sc-body-primary"></span>
+                    <span x-text="selectedVariant[`option${option.position}`]" class="text-sc-subtitle"></span>
+                  </div>
+
+                  <div class="grid w-full grid-cols-2 gap-x-2 gap-y-3 md:grid-cols-3">
+                    <template x-for="value in option.values">
+                      <button
+                        type="button"
+                        @click="
+                          changeVariant({
+                            name: option.name,
+                          }, value)
+                        "
+                        class="option-default"
+                        :class="
+                          {
+                            active: selectedVariant.options.includes(value),
+                            unavailable: !product.variants.some(variant => variant.available && variant.options[index] === value) && index === 0 ||
+                              !product.variants.some(variant => variant.available && variant.option1 === selectedVariant.option1 && variant.options[index] === value) && index === 1 ||
+                              !product.variants.some(variant => variant.available && variant.option1 === selectedVariant.option1 && variant.option2 === selectedVariant.option2 && variant.options[index] === value) && index === 2
+                          }
+                        "
+                      >
+                        <span x-text="value"></span>
+                      </button>
+                    </template>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </template>
+        </div>
+        <button
+          type="button"
+          x-show="!addedToCart"
+          :aria-busy="loading"
+          @click="addToCart"
+          class="{% render 'btn-class', btn: 'btn_primary_pill_fill' %} mt-7.5 w-full"
+          :class="!selectedVariant.available && 'opacity-50 pointer-events-none'"
+        >
+          <span x-text="selectedVariant.available ? 'Add to cart' : 'Sold out'"></span>
+          {% render 'btn-loader' %}
+        </button>
+        <div
+          x-show="addedToCart"
+          x-transition
+          class="mt-7.5 flex items-center gap-5"
+        >
+          <button
+            type="button"
+            class="{% render 'btn-class', btn: 'btn_primary_pill_fill' %} w-full"
+            @click="$store.quickOrder.hide(); $store.drawer.hide(); $store.cart.show()"
+          >
+            <span>View cart</span>
+          </button>
+
+          <button
+            type="button"
+            @click="$store.cart.checkout(); $el.setAttribute('aria-busy', 'true')"
+            class="{% render 'btn-class', btn: 'btn_primary_pill_outline' %} w-full"
+            @click="$store.cart.checkout()"
+          >
+            <span>Checkout</span>
+            {% render 'btn-loader' %}
+          </button>
+        </div>
+      </div>
+      {% render 'product-json', product: product %}
+    </div>
+  </template>
+</template>
