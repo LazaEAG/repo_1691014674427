@@ -1,0 +1,160 @@
+{% liquid
+  assign header_link_list = section.settings.header_link_list
+
+  assign shop_all_btn_text = section.settings.shop_all_btn_text
+  assign shop_all_btn_url = section.settings.shop_all_btn_url
+  assign shop_all_btn = section.settings.shop_all_btn
+
+  assign block_mega_menus = section.blocks | where: 'type', 'mega_menu'
+  assign mega_menus = ''
+
+  for link in header_link_list.links
+    assign link_title_handleize = link.title | handleize
+
+    if link.url == '#'
+      for block in block_mega_menus
+        assign menu_item = block.settings.menu_item | handleize
+        if link_title_handleize == menu_item
+          assign mega_menus = mega_menus | append: menu_item | append: ','
+        endif
+      endfor
+    endif
+  endfor
+%}
+
+<!-- HEADER DESKTOP VIEW, LAYOUT WITH LOGO LEFT. START -->
+<div class="hidden h-full w-full items-center justify-between xl:flex">
+  <!-- LOGO -->
+  <a class="mr-5 block" href="{{ routes.root_url }}">
+    {% if settings.logo_dark != blank and settings.logo_light != blank %}
+      <span class="sr-only">{{ shop.name }}</span>
+      <div class="shop-logo">
+        <img
+          src="{{ settings.logo_dark | img_url: 'master' }}"
+          alt="{{ shop.name | append: ' logo' }}"
+          class="w-full object-cover"
+        >
+      </div>
+    {% else %}
+      <span class="text-center text-xl uppercase duration-200 hover:opacity-70">{{ shop.name }}</span>
+    {% endif %}
+  </a>
+
+  <!-- NAV LIST -->
+  <ul
+    class="text-sc-title flex h-full flex-wrap items-center gap-x-10 text-lg font-medium"
+  >
+    {% for link in header_link_list.links %}
+      {% assign link_title_handleize = link.title | handleize %}
+
+      {% if link.url == '#' and mega_menus contains link_title_handleize %}
+        <li
+          aria-haspopup="true"
+          class="header-link h-full"
+          @mouseenter="$refs['blur-overlay-header'].classList.add('show'); document.querySelector('header').classList.add('!translate-y-0')"
+          @mouseleave="$refs['blur-overlay-header'].classList.remove('show'); document.querySelector('header').classList.remove('!translate-y-0')"
+        >
+          <button class="btn-link-anim pointer-events-none h-full">
+            <span class="flex h-full items-center py-3">{{ link.title }}</span>
+          </button>
+
+          {% for block in block_mega_menus %}
+            {% assign menu_item = block.settings.menu_item | handleize %}
+
+            {% if menu_item == link_title_handleize %}
+              {% render 'layout-mega-menu', block: block, menu_item: link %}
+            {% endif %}
+          {% endfor %}
+        </li>
+      {% endif %}
+
+      {% if link.url == '#' %}
+        {% unless mega_menus contains link_title_handleize %}
+          <li
+            aria-haspopup="true"
+            class="header-link h-full"
+            @mouseenter="$refs['blur-overlay-header'].classList.add('show'); document.querySelector('header').classList.add('!translate-y-0')"
+            @mouseleave="$refs['blur-overlay-header'].classList.remove('show'); document.querySelector('header').classList.remove('!translate-y-0')"
+          >
+            <button class="btn-link-anim pointer-events-none h-full">
+              <span class="flex h-full items-center py-3">{{ link.title }}</span>
+            </button>
+
+            {% for block in block_mega_menus %}
+              {% assign menu_item = block.settings.menu_item | handleize %}
+
+              {% if menu_item == link_title_handleize %}
+                {% render 'layout-mega-menu', block: block, menu_item: link %}
+              {% endif %}
+            {% endfor %}
+          </li>
+        {% endunless %}
+      {% endif %}
+
+      {% if link.url != '#' %}
+        <li class="h-full">
+          <a href="{{ link.url }}" class="btn-link-anim h-full">
+            <span class="flex h-full items-center py-3">{{ link.title }}</span>
+          </a>
+        </li>
+      {% endif %}
+    {% endfor %}
+  </ul>
+
+  <div class="text-sc-title ml-5 flex items-center">
+    {% unless request.page_type contains 'customers/' %}
+      <a
+        class="block duration-200 hover:opacity-70"
+        href="{% if customer %}{{ routes.account_url }}{% else %}{{ routes.account_login_url }}{% endif %}"
+        {% unless customer %}
+          {% if login_layout == 'drawer' %}
+            aria-controls="login-drawer"
+            :aria-expanded="$store.drawer.visible && $store.drawer.id === 'login-drawer'"
+            @click.prevent="$store.drawer.show({ id: 'login-drawer' })"
+          {% endif %}
+        {% endunless %}
+      >
+        <span class="sr-only">Login to your account</span>
+        {% render 'icon', name: 'account' %}
+      </a>
+    {% endunless %}
+
+    {% unless request.page_type == 'search' %}
+      <a
+        class="ml-5 block duration-200 hover:opacity-70"
+        href="{{ routes.search_url }}"
+        aria-controls="search-drawer"
+        :aria-expanded="$store.drawer.visible && $store.drawer.id === 'search'"
+        @click.prevent="$store.drawer.show({ id: 'search' })"
+      >
+        <span class="sr-only">Open search</span>
+        {% render 'icon', name: 'search' %}
+      </a>
+    {% endunless %}
+
+    <a
+      href="{{ shop_all_btn_url }}"
+      class="ml-5 {% if cart.item_count != 0 %}hidden{% endif %} {% render 'btn-class', btn: shop_all_btn %}"
+      :class="$store['cart'].obj.item_count === 0 ? '!flex' : '!hidden'"
+    >
+      <span>{{ shop_all_btn_text }}</span>
+    </a>
+
+    <button
+      type="button"
+      class="duration-200 hover:opacity-70 ml-5 relative {% if cart.item_count == 0 %}hidden{% endif %}"
+      aria-controls="cart-drawer"
+      :aria-expanded="$store.cart.visible"
+      @click="$store['cart'].visible ? $store['cart'].hide() : $store['cart'].show()"
+      :class="$store['cart'].obj.item_count > 0 ? '!flex' : '!hidden'"
+    >
+      <span class="sr-only">Open cart drawer</span>
+      {% render 'icon', name: 'cart', class: 'w-[28px] h-[28px]' %}
+      <span
+        x-text="$store['cart'].obj.item_count"
+        class="absolute left-1/2 bottom-1 -translate-x-1/2 text-xs font-medium text-white"
+      ></span>
+    </button>
+  </div>
+</div>
+<!-- HEADER DESKTOP VIEW, LAYOUT WITH LOGO LEFT. END -->
