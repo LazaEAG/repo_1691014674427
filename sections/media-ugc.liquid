@@ -1,0 +1,323 @@
+{% liquid
+  assign section_anchor_id = section.settings.section_anchor_id | handleize
+  assign color_scheme = section.settings.color_scheme
+
+  assign headline = section.settings.headline
+  assign subtitle = section.settings.subtitle
+  assign layout = section.settings.layout
+  assign limit = section.settings.limit | default: 2
+  assign load_more = section.settings.load_more
+
+  assign button_text = section.settings.button_text
+  assign button_type = section.settings.button_type
+
+  assign blocks = section.blocks
+
+  assign pt_mob = section.settings.pt_mob
+  assign pb_mob = section.settings.pb_mob
+  assign pt_tab = section.settings.pt_tab
+  assign pb_tab = section.settings.pb_tab
+  assign pt_desk = section.settings.pt_desk
+  assign pb_desk = section.settings.pb_desk
+%}
+
+{% render 'section-paddings',
+  section_id: section.id,
+  pt_mob: pt_mob,
+  pb_mob: pb_mob,
+  pt_tab: pt_tab,
+  pb_tab: pb_tab,
+  pt_desk: pt_desk,
+  pb_desk: pb_desk
+%}
+
+<div
+  id="{{ section_anchor_id }}"
+  data-section-id="{{ section.id }}"
+  class="color-scheme-{{ color_scheme }} bg-sc-bg-primary bg-primary-gradient overflow-hidden"
+>
+  <div class="container overflow-visible">
+    {% if headline %}
+      <div class="mb-3 overflow-hidden">
+        <h2
+          class="animate__animated font-primary smD:text-5xl text-sc-title text-center text-4xl font-medium opacity-0"
+          x-intersect="$el.classList.add('animate__fadeInUp')"
+        >
+          {{ headline }}
+        </h2>
+      </div>
+    {% endif %}
+    {% if subtitle %}
+      <div class="overflow-hidden">
+        <div
+          class="animate__animated eag-delay-500ms rte smD:text-lg text-sc-body-primary text-center text-sm opacity-0 md:text-base"
+          x-intersect="$el.classList.add('animate__fadeInUp')"
+        >
+          {{ subtitle }}
+        </div>
+      </div>
+    {% endif %}
+
+    {% if layout == 'grid' %}
+      <div
+        class="animate__animated opacity-0"
+        x-data="{ index: {{ limit }}, initIndex: {{ limit }} }"
+        x-intersect="$el.classList.add('animate__fadeIn')"
+      >
+        <div class="md:gap-7.5 smD:grid-cols-4 mt-10 grid grid-cols-2 gap-2.5">
+          {%- for block in blocks -%}
+            <div x-collapse x-show="{{ forloop.index }} <= index">
+              {%- render 'video-card',
+                video: block.settings.video,
+                img: block.settings.img,
+                layout: layout,
+                index: forloop.index,
+                class: 'h-[200px] xs:h-[300px] md:h-[400px] 2xl:h-[430px] 4k:h-[550px]'
+              -%}
+            </div>
+          {%- endfor -%}
+        </div>
+
+        <div
+          x-cloak
+          x-collapse
+          x-show="index < {{ blocks.size }}"
+        >
+          <button
+            @click="index = index + initIndex"
+            class="block w-max max-w-full mx-auto mt-5 text-base {% render 'btn-class', btn: 'link_primary' %}"
+          >
+            <span>
+              {{ load_more | default: 'Load more videos' }}
+            </span>
+          </button>
+        </div>
+
+        {% if button_text != blank %}
+          <a
+            href="{{ button_url }}"
+            class="{% render 'btn-class', btn: button_type %} mt-7.5 mx-auto"
+            aria-label="{{ button_text }}"
+          >
+            <span>
+              {{- button_text -}}
+            </span>
+          </a>
+        {% endif %}
+      </div>
+    {% elsif layout == 'slider' %}
+      <div
+        class="animate__animated mt-15 swiper overflow-visible opacity-0"
+        x-ignore
+        ax-load
+        x-data="swiperSlider($el, 'ugc_slider')"
+        x-intersect="$el.classList.add('animate__fadeIn')"
+      >
+        {% assign blog_post_card_class = 'swiper-slide h-auto max-w-[270px] md:max-w-[300px] smD:max-w-[400px]' %}
+
+        <div
+          class="swiper-wrapper"
+          @mouseenter="stopAutoPlay()"
+          @mouseleave="startAutoPlay()"
+        >
+          {%- for block in blocks -%}
+            {%- render 'video-card',
+              video: block.settings.video,
+              img: block.settings.img,
+              layout: layout,
+              index: forloop.index,
+              class: 'swiper-slide max-w-[304px] 2k:max-w-[350px] h-[400px] 2xl:h-[430px] 4k:h-[550px]'
+            -%}
+          {%- endfor -%}
+        </div>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Media UGC",
+  "tag": "section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "section_anchor_id",
+      "label": "Section anchor id",
+      "default": "Media UGC"
+    },
+    {
+      "type": "header",
+      "content": "Content settings"
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "Section colors"
+    },
+    {
+      "type": "text",
+      "id": "headline",
+      "label": "Section headline",
+      "default": "Viral On TikTok"
+    },
+    {
+      "type": "richtext",
+      "id": "subtitle",
+      "label": "Section subtitle",
+      "default": "<p>Auto-Unlock detects when you arrive and unlocks the door. Enable Auto-Lock to lock when the door closes.</p>"
+    },
+    {
+      "type": "select",
+      "id": "layout",
+      "label": "Layout type",
+      "options": [
+        {
+          "value": "grid",
+          "label": "Grid"
+        },
+        {
+          "value": "slider",
+          "label": "Slider"
+        }
+      ],
+      "default": "grid"
+    },
+    {
+      "type": "number",
+      "id": "limit",
+      "label": "Grid load more amount",
+      "default": 2
+    },
+    {
+      "type": "text",
+      "id": "load_more",
+      "label": "load more link text",
+      "info": "Grid load more link text",
+      "default": "Load more videos"
+    },
+    {
+      "type": "header",
+      "content": "Section button settings"
+    },
+    {
+      "type": "text",
+      "id": "button_text",
+      "label": "Section button text",
+      "default": "Button text"
+    },
+    {
+      "type": "select",
+      "id": "button_type",
+      "label": "Section button type",
+      "options": [
+        {
+          "value": "btn_primary_main_fill",
+          "label": "main primary fill"
+        },
+        {
+          "value": "btn_secondary_main_fill",
+          "label": "main secondary fill"
+        },
+        {
+          "value": "btn_primary_main_outline",
+          "label": "main primary outline"
+        },
+        {
+          "value": "btn_secondary_main_outline",
+          "label": "main secondary outline"
+        },
+        {
+          "value": "btn_primary_pill_fill",
+          "label": "pill primary fill"
+        },
+        {
+          "value": "btn_secondary_pill_fill",
+          "label": "pill secondary fill"
+        },
+        {
+          "value": "btn_primary_pill_outline",
+          "label": "pill primary outline"
+        },
+        {
+          "value": "btn_secondary_pill_outline",
+          "label": "pill secondary outline"
+        },
+        {
+          "value": "link_primary",
+          "label": "Link primary"
+        },
+        {
+          "value": "link_secondary",
+          "label": "Link secondary"
+        }
+      ],
+      "default": "btn_primary_pill_fill"
+    },
+    {
+      "type": "header",
+      "content": "Padding Y settings"
+    },
+    {
+      "type": "number",
+      "id": "pt_mob",
+      "label": "Mobile padding top in px",
+      "default": 40
+    },
+    {
+      "type": "number",
+      "id": "pb_mob",
+      "label": "Mobile padding bottom in px",
+      "default": 40
+    },
+    {
+      "type": "number",
+      "id": "pt_tab",
+      "label": "Tablet padding top in px",
+      "default": 70
+    },
+    {
+      "type": "number",
+      "id": "pb_tab",
+      "label": "Tablet padding bottom in px",
+      "default": 50
+    },
+    {
+      "type": "number",
+      "id": "pt_desk",
+      "label": "Desktop padding top in px",
+      "default": 80
+    },
+    {
+      "type": "number",
+      "id": "pb_desk",
+      "label": "Desktop padding bottom in px",
+      "default": 50
+    }
+  ],
+  "blocks": [
+    {
+      "name": "Video block",
+      "type": "video",
+      "settings": [
+        {
+          "type": "video",
+          "id": "video",
+          "label": "Video"
+        },
+        {
+          "type": "image_picker",
+          "id": "img",
+          "label": "Video poster"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Media UGC",
+      "category": "Repeatable"
+    }
+  ]
+}
+{% endschema %}
