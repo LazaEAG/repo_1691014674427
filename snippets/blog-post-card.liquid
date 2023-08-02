@@ -1,0 +1,159 @@
+{%- comment -%}
+  BLOG POST COMPONENT
+
+  * type: main, second, related
+  * blog
+  * article: the article to render. If no article is passed then a placeholder is generated
+  * class
+  * show_excerpt: if set to true, it will show the excerpt first or truncated part of the main content if none is set
+  * show_date
+  * article_btn
+  * article_btn_type
+{%- endcomment -%}
+
+{% case type %}
+  {% when 'main' %}
+    <article class="{{ class }} group flex flex-col">
+      {%- if article -%}
+        {%- if article.image != blank -%}
+          <a
+            href="{{ article.url }}"
+            class="image-overflow-hidden smD:pb-[486px] 2k:pb-[442px] relative mb-5 block pb-[400px]"
+            aria-label="Redirect to article"
+          >
+            {{-
+              article.image
+              | image_url: width: article.image.width
+              | image_tag:
+                loading: 'lazy',
+                widths: '300, 400, 500, 600',
+                class: 'absolute top-0 left-0 object-cover w-full h-full group-hover:scale-105 duration-500'
+            -}}
+
+            <span class="text-sc-title bg-sc-bg-primary md:top-7.5 md:right-7.5 absolute top-3.5 right-4 flex min-w-[70px] justify-center py-2 px-3 text-sm font-medium">
+              {{- blog.title -}}
+            </span>
+          </a>
+        {%- endif -%}
+      {%- else -%}
+        <div class="image-overflow-hidden smD:pb-[486px] relative mb-5 pb-[400px]">
+          {{-
+            'image'
+            | placeholder_svg_tag: 'absolute top-0 left-0 object-cover w-full h-full group-hover:scale-105 duration-500'
+          -}}
+        </div>
+      {%- endif -%}
+
+      <div class="flex h-full flex-col space-y-3">
+        {% if show_date %}
+          <div class="gap-x-7.5 flex flex-row flex-wrap gap-y-3">
+            <p class="text-sc-title flex items-center space-x-2 text-sm">
+              {% render 'icon', name: 'calendar' %}
+              <span>
+                {{- article.published_at | default: 'now' | date: '%B %d, %Y' -}}
+              </span>
+            </p>
+
+            {% assign reading_time = article.content
+              | strip_html
+              | split: ' '
+              | size
+              | times: 1.0
+              | divided_by: 250
+              | ceil
+            -%}
+            {% if reading_time > 0 %}
+              <p class="text-sc-title flex items-center space-x-2 text-sm">
+                {% render 'icon', name: 'clockwise' %}
+                <span>
+                  {{- reading_time }}
+                  {{ reading_time | pluralize: 'minute', 'minutes' }} read
+                </span>
+              </p>
+            {% endif %}
+          </div>
+        {% endif %}
+
+        <a
+          href="{{ article.url | default: '#' }}"
+          class="
+            font-primary 2k:font-medium text-sc-title group-hover:text-sc-link-primary-text-default w-max max-w-full text-2xl duration-500 ease-in-out
+            {% unless section.settings.layout == "3" -%}
+            2k:text-4xl
+            {%- endunless -%}
+          "
+          aria-label="Redirect to article"
+        >
+          {{- article.title | default: 'Article title' -}}
+        </a>
+
+        {% assign content_size = article.excerpt_or_content | strip_html | split: ' ' | size -%}
+        {% if show_excerpt and content_size > 0 %}
+          <div class="rte text-sc-body-primary 2k:text-lg line-clamp-3 2xl:line-clamp-2 text-base">
+            {{ article.excerpt_or_content | strip_html }}
+          </div>
+        {% endif %}
+      </div>
+    </article>
+  {% when 'second' %}
+    <article class="{{ class }} group flex flex-col">
+      {%- if article -%}
+        {%- if article.image != blank -%}
+          <a
+            href="{{ article.url }}"
+            class="image-overflow-hidden relative block pb-[300px]"
+            aria-label="Redirect to article"
+          >
+            {{-
+              article.image
+              | image_url: width: article.image.width
+              | image_tag:
+                loading: 'lazy',
+                widths: '300,400,500,600',
+                class: 'absolute top-0 left-0 object-cover w-full h-full group-hover:scale-105 duration-500'
+            -}}
+          </a>
+        {%- endif -%}
+      {%- else -%}
+        <div class="image-overflow-hidden 4k:pb-[400px] relative pb-[300px]">
+          {{-
+            'image'
+            | placeholder_svg_tag: 'absolute top-0 left-0 object-cover w-full h-full group-hover:scale-105 duration-500'
+          -}}
+        </div>
+      {%- endif -%}
+
+      <div class="flex h-full flex-col py-6">
+        {% if show_date %}
+          <p class="text-sc-body-primary mb-3 text-xs">
+            {{- article.published_at | default: 'now' | date: '%B %d, %Y' -}}
+          </p>
+        {% endif %}
+        <a
+          href="{{ article.url | default: '#' }}"
+          class="font-primary group-hover:text-sc-link-primary-text-default mb-3 w-max max-w-full text-xl duration-500 ease-in-out"
+          aria-label="Redirect to article"
+        >
+          {{- article.title | default: 'Article title' -}}
+        </a>
+        {% if show_excerpt %}
+          <div class="rte text-sc-body-primary line-clamp-3 2xl:line-clamp-2 text-base">
+            {{ article.excerpt_or_content | strip_html }}
+          </div>
+        {% endif %}
+        {% if article_btn %}
+          <div class="mt-auto">
+            <a
+              href="{{ article.url | default: '#' }}"
+              class="{% render 'btn-class', btn: article_btn_type %} mt-4"
+              aria-label="Redirect to article - {{ article.title }}"
+            >
+              <span>{{- article_btn -}}</span>
+            </a>
+          </div>
+        {% endif %}
+      </div>
+    </article>
+  {% when 'related' %}
+
+{% endcase %}
