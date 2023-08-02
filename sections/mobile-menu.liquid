@@ -1,0 +1,504 @@
+{% liquid
+  assign main_linklist = section.settings.main_linklist
+  assign additional_linklist = section.settings.additional_linklist
+
+  assign enable_social_link = section.settings.enable_social_link
+
+  assign enable_help_btn = section.settings.enable_help_btn
+  assign help_btn_text = section.settings.help_btn_text
+  assign help_btn_url = section.settings.help_btn_url
+
+  assign submenu_items = section.blocks | where: 'type', 'submenu_items'
+%}
+
+{% render 'global-sections-css-variables-setter' %}
+
+<!-- MOBILE MENU START -->
+<template x-teleport="#mobile-menu-overlay">
+  <div @click.self="$store.mobileMenu.hide()" class="fixed inset-0 h-full w-full">
+    <div
+      data-section-id="{{ section.id }}"
+      class="md:rounded-tr-r-block md:rounded-br-r-block bg-sc-bg-primary absolute z-10 flex h-full w-full flex-col items-start overflow-hidden shadow md:max-w-[500px] xl:max-w-[550px]"
+      x-cloak
+      x-show="$store.mobileMenu.visible"
+      x-transition:enter="transition ease-out duration-300"
+      x-transition:enter-start="translate-y-full md:translate-y-0 md:-translate-x-full"
+      x-transition:enter-end="translate-y-0 md:translate-x-0"
+      x-transition:leave="transition ease-in duration-300"
+      x-transition:leave-start="translate-y-0 md:translate-x-0"
+      x-transition:leave-end="translate-y-full md:translate-y-0 md:-translate-x-full"
+    >
+      <!-- MAIN LINKS -->
+      <nav class="scrollbar-hide relative flex h-full w-full flex-col text-lg font-medium">
+        <!-- TOP LVL LINKS -->
+        <ul
+          x-cloak
+          x-show="$store.mobileMenu.activeSubMenu === ''"
+          class="flex h-full flex-col"
+        >
+          <!-- STICKY PART -->
+          <li class="p-7.5 md:px-12.5 bg-sc-bg-primary sticky top-0 flex duration-200 md:py-10">
+            <button
+              type="button"
+              @click="$store.mobileMenu.hide()"
+              class="text-sc-title smD:hover:opacity-70 -ml-[12.5px]"
+            >
+              <span class="sr-only">Close sidebar menu</span>
+              {% render 'icon', name: 'close', size: 'lg' %}
+            </button>
+          </li>
+
+          <!-- SCROLLABLE PART -->
+          <li class="scrollbar-hide bg-sc-bg-primary h-full w-full flex-1 overflow-y-auto">
+            <ul class="h-full">
+              <!-- MAIN LINKS -->
+              <li class="px-7.5 md:px-12.5 pb-7.5 flex flex-col items-start md:pb-10">
+                <ul class="w-full space-y-5">
+                  {% for link in main_linklist.links %}
+                    {% liquid
+                      assign submenu = link.title | handleize
+                    %}
+                    <li
+                      {% unless forloop.first %}
+                        class="border-sc-title/20 border-t pt-5"
+                      {% endunless %}
+                    >
+                      {% if link.url == '#' %}
+                        <!-- WITH SUBMENU -->
+                        <button
+                          type="button"
+                          aria-controls="{{ submenu }}"
+                          @click="$store.mobileMenu.changeActiveSubMenu('{{ submenu }}')"
+                          :aria-expanded="$store.mobileMenu.activeSubMenu === '{{ submenu }}'"
+                          class="text-sc-title smD:hover:opacity-70 flex w-full items-center justify-between duration-200"
+                        >
+                          <span>{{ link.title }}</span>
+                          {% render 'icon', name: 'chevron', class: 'shrink-0 ml-2.5', size: 'md' %}
+                        </button>
+                      {% else %}
+                        <!-- COMMON LINK -->
+                        <a
+                          href="{{ link.url }}"
+                          class="text-sc-title smD:hover:opacity-70 flex w-full items-center justify-between duration-200"
+                          {% if link.current %}
+                            aria-current="page"
+                          {% endif %}
+                        >
+                          <span>{{ link.title }}</span>
+                        </a>
+                      {% endif %}
+                    </li>
+                  {% endfor %}
+
+                  <!-- ACCOUNT LINK / Hidden from smD breakpoint -->
+                  <li class="smD:hidden border-sc-title/20 border-t pt-5">
+                    <a
+                      href="{{ routes.account_url }}"
+                      class="text-sc-title smD:hover:opacity-70 flex items-center duration-200"
+                    >
+                      <span class="sr-only">Login to your account</span>
+                      {% render 'icon', name: 'account', class: 'mr-2' %}
+                      <span>My account</span>
+                    </a>
+                  </li>
+                </ul>
+              </li>
+
+              <!-- ADDITIONAL LINKS -->
+              <li
+                class="px-7.5 md:px-12.5 py-7.5 border-sc-title/20 flex flex-col items-start border-t md:py-10"
+              >
+                <ul class="w-full space-y-5">
+                  {% for link in additional_linklist.links %}
+                    <li
+                      {% if forloop.last %}
+                        class="border-sc-title/20 !mb-6 border-b pb-6"
+                      {% endif %}
+                    >
+                      <a href="{{ link.url }}" class="text-sc-title smD:hover:opacity-70 duration-200">
+                        <span>{{ link.title }}</span>
+                      </a>
+                    </li>
+                  {% endfor %}
+
+                  {% if enable_social_link == true %}
+                    <li class="text-sc-title">
+                      {% render 'social-media', class: 'flex gap-2', hover_class: 'smD:hover:opacity-70 duration-200' %}
+                    </li>
+                  {% endif %}
+
+                  {% if enable_help_btn == true %}
+                    <li class="border-sc-title bg-sc-bg-primary !mt-6 border py-2.5 px-3">
+                      <a
+                        href="{{ help_btn_url }}"
+                        class="text-sc-title smD:hover:opacity-70 flex items-center space-x-2.5 text-base duration-200"
+                      >
+                        {% render 'icon', name: 'help_filled', size: 'md' %}
+                        <span>{{ help_btn_text }}</span>
+                      </a>
+                    </li>
+                  {% endif %}
+                </ul>
+              </li>
+            </ul>
+          </li>
+        </ul>
+
+        <!-- SUBMENUS -->
+        <ul
+          x-cloak
+          x-show="$store.mobileMenu.activeSubMenu !== ''"
+          x-transition:enter="transition ease-out duration-300"
+          x-transition:enter-start="translate-y-full md:translate-y-0 md:translate-x-full"
+          x-transition:enter-end="translate-y-0 md:translate-x-0"
+          class="flex h-full flex-col"
+        >
+          <!-- STICKY PART -->
+          <li class="p-7.5 md:px-12.5 bg-sc-bg-primary sticky top-0 flex duration-200 md:py-10">
+            <button
+              type="button"
+              @click="$store.mobileMenu.changeActiveSubMenu('')"
+              class="text-sc-title smD:hover:opacity-70 -ml-[12.5px] flex items-center"
+            >
+              <span class="sr-only">Close sidebar submenu</span>
+              {% render 'icon', name: 'chevron', size: 'lg', class: '-rotate-180' %}
+              <span class="text-sm">Go Back</span>
+            </button>
+          </li>
+
+          <!-- SCROLLABLE PART -->
+          <li class="scrollbar-hide px-7.5 md:px-12.5 pb-7.5 bg-sc-bg-primary flex h-full w-full flex-col items-start overflow-y-auto overflow-x-hidden md:pb-10">
+            {% for link in main_linklist.links %}
+              {% if link.url == '#' and link.links.size > 0 %}
+                {% liquid
+                  assign submenu = link.title | handleize
+                %}
+                <ul
+                  x-cloak
+                  x-show="$store.mobileMenu.activeSubMenu === '{{ submenu }}'"
+                  x-data="{ activeAccordion: 1 }"
+                  class="w-full space-y-5"
+                >
+                  {% for child_link in link.links %}
+                    {% assign link_links_size = link.links | size %}
+                    <li class="{% unless link_links_size == 1 %}border-sc-title/20 border-b pb-5{% endunless %}">
+                      {% if child_link.url == '#' %}
+                        <div>
+                          <button
+                            type="button"
+                            class="text-sc-title smD:hover:opacity-70 flex w-full items-center justify-between text-lg font-medium duration-200"
+                            @click="activeAccordion === {{ forloop.index }} ? activeAccordion = null : activeAccordion = {{ forloop.index }}"
+                          >
+                            <span>{{ child_link.title }}</span>
+                            {% render 'icon', name: 'chevron', class: 'shrink-0 ml-2.5', size: 'md' %}
+                          </button>
+                          <div
+                            x-show="activeAccordion === {{ forloop.index }}"
+                            x-collapse
+                          >
+                            <ul class="space-y-3 pt-3">
+                              {% for link in child_link.links %}
+                                <li class="text-sc-body-primary text-base">
+                                  <a href="{{ link.url }}" class="smD:btn-link-anim">
+                                    <span>
+                                      {{ link.title }}
+                                    </span>
+                                  </a>
+                                </li>
+                              {% endfor %}
+                            </ul>
+                          </div>
+                        </div>
+                      {% else %}
+                        <a
+                          href="{{ child_link.url }}"
+                          class="text-sc-title smD:hover:opacity-70 flex w-full items-center justify-between text-lg font-medium duration-200"
+                        >
+                          {{ child_link.title }}
+                        </a>
+                      {% endif %}
+                    </li>
+                  {% endfor %}
+                  <!-- UPSELLS -->
+                  <li class="!mt-6 flex w-full pb-10">
+                    {% for block in submenu_items %}
+                      {% liquid
+                        assign menu_item = block.settings.menu_item | handleize
+                      %}
+                      {% if submenu == menu_item %}
+                        <div
+                          x-ignore
+                          ax-load
+                          x-data="swiperSlider($el, 'sidebar_menu_upsells')"
+                          class="swiper w-full overflow-visible"
+                        >
+                          <div class="swiper-wrapper">
+                            {% for i in (1..4) %}
+                              {% liquid
+                                assign product_key = 'product_' | append: i
+                                assign image_key = 'product_image_' | append: i
+                                assign title_key = 'product_title_' | append: i
+                                assign subtitle_key = 'product_subtitle_' | append: i
+
+                                assign product = block.settings[product_key]
+                                assign product_image = block.settings[image_key] | default: product.featured_image
+                                assign product_title = block.settings[title_key] | default: product.title
+                                assign product_subtitle = block.settings[subtitle_key]
+                              %}
+                              {% if product != blank %}
+                                <div class="swiper-slide no-select-all h-auto">
+                                  <a
+                                    href="{{ product.url }}"
+                                    class="rounded-r-block bg-sc-bg-secondary relative mb-2.5 block overflow-hidden pt-[100%]"
+                                  >
+                                    <span class="absolute inset-0 block">
+                                      {{
+                                        product_image
+                                        | image_url: width: 200
+                                        | image_tag:
+                                          loading: 'lazy',
+                                          alt: product_image.alt,
+                                          class: 'object-contain object-center w-full h-full'
+                                      }}
+                                    </span>
+                                  </a>
+
+                                  <span class="text-sc-title mb-1 block text-center text-base font-medium">
+                                    {{ product_title }}
+                                  </span>
+                                  <span class="text-sc-body-primary block text-center text-sm">
+                                    {{ product_subtitle }}
+                                  </span>
+                                </div>
+                              {% endif %}
+                            {% endfor %}
+                          </div>
+                        </div>
+                      {% endif %}
+                    {% endfor %}
+                  </li>
+                </ul>
+              {% endif %}
+            {% endfor %}
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+</template>
+<!-- MOBILE MENU START -->
+
+{% schema %}
+{
+  "name": "MOBILE MENU",
+  "tag": "aside",
+  "settings": [
+    {
+      "type": "color",
+      "id": "sc-title",
+      "label": "Title",
+      "default": "#151515"
+    },
+    {
+      "type": "color",
+      "id": "sc-body-primary",
+      "label": "Body primary",
+      "default": "#52525B"
+    },
+    {
+      "type": "color",
+      "id": "sc-bg-primary",
+      "label": "Primary background",
+      "default": "#FFFFFF"
+    },
+    {
+      "type": "color",
+      "id": "sc-bg-secondary",
+      "label": "Secondary background",
+      "default": "#F6F6F6"
+    },
+    {
+      "type": "color",
+      "id": "sc-btn-primary-bg-default",
+      "label": "Primary btn bg default",
+      "default": "#054A49"
+    },
+    {
+      "type": "color",
+      "id": "sc-btn-primary-text-default",
+      "label": "Primary btn text default",
+      "default": "#FFFFFF"
+    },
+    {
+      "type": "color",
+      "id": "sc-btn-primary-bg-hover",
+      "label": "Primary btn bg hover",
+      "default": "#002F2E"
+    },
+    {
+      "type": "color",
+      "id": "sc-btn-primary-text-hover",
+      "label": "Primary btn text hover",
+      "default": "#FFFFFF"
+    },
+    {
+      "type": "link_list",
+      "id": "main_linklist",
+      "label": "Main link list"
+    },
+    {
+      "type": "link_list",
+      "id": "additional_linklist",
+      "label": "Additional link list"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_social_link",
+      "label": "Enable social links",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "Help button"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_help_btn",
+      "label": "Enable help button",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "help_btn_text",
+      "label": "Help button text",
+      "default": "Need Help?"
+    },
+    {
+      "type": "url",
+      "id": "help_btn_url",
+      "label": "Help button url"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "submenu_items",
+      "name": "Submenu featured items",
+      "settings": [
+        {
+          "type": "text",
+          "id": "menu_item",
+          "label": "Menu item"
+        },
+        {
+          "type": "header",
+          "content": "Item 1"
+        },
+        {
+          "type": "product",
+          "id": "product_1",
+          "label": "Product"
+        },
+        {
+          "type": "image_picker",
+          "id": "product_image_1",
+          "label": "Custom image",
+          "info": "If empty, will be displayed image from product above"
+        },
+        {
+          "type": "text",
+          "id": "product_title_1",
+          "label": "Custom title",
+          "info": "If empty will be displayed title from product above"
+        },
+        {
+          "type": "text",
+          "id": "product_subtitle_1",
+          "label": "Custom subtitle",
+          "info": "If empty, won't displayed"
+        },
+        {
+          "type": "header",
+          "content": "Item 2"
+        },
+        {
+          "type": "product",
+          "id": "product_2",
+          "label": "Product"
+        },
+        {
+          "type": "image_picker",
+          "id": "product_image_2",
+          "label": "Custom image",
+          "info": "If empty, will be displayed image from product above"
+        },
+        {
+          "type": "text",
+          "id": "product_title_2",
+          "label": "Custom title",
+          "info": "If empty will be displayed title from product above"
+        },
+        {
+          "type": "text",
+          "id": "product_subtitle_2",
+          "label": "Custom subtitle",
+          "info": "If empty, won't displayed"
+        },
+        {
+          "type": "header",
+          "content": "Item 3"
+        },
+        {
+          "type": "product",
+          "id": "product_3",
+          "label": "Product"
+        },
+        {
+          "type": "image_picker",
+          "id": "product_image_3",
+          "label": "Custom image",
+          "info": "If empty, will be displayed image from product above"
+        },
+        {
+          "type": "text",
+          "id": "product_title_3",
+          "label": "Custom title",
+          "info": "If empty will be displayed title from product above"
+        },
+        {
+          "type": "text",
+          "id": "product_subtitle_3",
+          "label": "Custom subtitle",
+          "info": "If empty, won't displayed"
+        },
+        {
+          "type": "header",
+          "content": "Item 4"
+        },
+        {
+          "type": "product",
+          "id": "product_4",
+          "label": "Product"
+        },
+        {
+          "type": "image_picker",
+          "id": "product_image_4",
+          "label": "Custom image",
+          "info": "If empty, will be displayed image from product above"
+        },
+        {
+          "type": "text",
+          "id": "product_title_4",
+          "label": "Custom title",
+          "info": "If empty will be displayed title from product above"
+        },
+        {
+          "type": "text",
+          "id": "product_subtitle_4",
+          "label": "Custom subtitle",
+          "info": "If empty, won't displayed"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}
