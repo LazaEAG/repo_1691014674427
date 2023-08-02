@@ -1,0 +1,210 @@
+{% liquid
+  assign section_anchor_id = section.settings.section_anchor_id | handleize
+  assign color_scheme = section.settings.color_scheme
+
+  assign marquee_reverse = section.settings.marquee_reverse
+  assign marquee_speed = section.settings.marquee_speed
+  assign center_fit = section.settings.center_fit
+  assign stop_on_hover = section.settings.stop_on_hover
+  assign blocks = section.blocks
+
+  assign pt_mob = section.settings.pt_mob
+  assign pb_mob = section.settings.pb_mob
+  assign pt_tab = section.settings.pt_tab
+  assign pb_tab = section.settings.pb_tab
+  assign pt_desk = section.settings.pt_desk
+  assign pb_desk = section.settings.pb_desk
+%}
+
+{% render 'section-paddings',
+  section_id: section.id,
+  pt_mob: pt_mob,
+  pb_mob: pb_mob,
+  pt_tab: pt_tab,
+  pb_tab: pb_tab,
+  pt_desk: pt_desk,
+  pb_desk: pb_desk
+%}
+
+{% unless stop_on_hover %}
+  <style>
+    [data-section-id='{{ section.id }}'] [data-marquee-inner]:hover .marquee {
+      animation-play-state: running;
+    }
+  </style>
+{% endunless %}
+
+<div
+  id="{{ section_anchor_id }}"
+  data-section-id="{{ section.id }}"
+  class="color-scheme-{{ color_scheme }} bg-sc-bg-primary bg-primary-gradient relative overflow-hidden"
+>
+  <div class="container flex overflow-visible" data-marquee-inner>
+    <ul
+      class="marquee absolute inline-flex w-max items-center {% if marquee_reverse %}marquee-reverse{% endif %}"
+      x-data="marquee"
+      @resize.window="marqueeLogic()"
+      data-marquee-speed="{{ marquee_speed }}s"
+      {% if center_fit %}
+        data-center-fit
+      {% endif %}
+    >
+      {% for block in blocks %}
+        {% assign text = block.settings.text %}
+        {% assign icon_class = 'w-10 h-10 2xl:w-12.5 2xl:h-12.5 ' %}
+        {% unless marquee_reverse %}
+          {% assign icon_class = icon_class | append: ' rotate-180' %}
+        {% endunless %}
+
+        {% if text != blank %}
+          <li
+            class="
+              text-sc-title smD:space-x-15 smD:mx-7.5 2xl:space-x-25 items-center 2xl:mx-12.5 mx-6 flex shrink-0 space-x-12 whitespace-nowrap
+              {% unless marquee_reverse %}flex-row-reverse !space-x-reverse {% endunless %}
+            "
+            data-marquee-el
+          >
+            <span class="font-primary whitespace-nowrap text-4xl font-medium 2xl:text-6xl">{{- text -}}</span>
+            {% render 'icon', name: 'arrow-right', class: icon_class %}
+          </li>
+        {% endif %}
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Marquee text",
+  "tag": "section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "section_anchor_id",
+      "label": "Section anchor id",
+      "default": "Marquee text"
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "Color scheme"
+    },
+    {
+      "type": "checkbox",
+      "id": "marquee_reverse",
+      "label": "Reverse marquee animation",
+      "default": true
+    },
+    {
+      "type": "number",
+      "id": "marquee_speed",
+      "label": "Marquee speed (in sec)",
+      "default": 20
+    },
+    {
+      "type": "checkbox",
+      "id": "center_fit",
+      "label": "Center when blocks fit",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "stop_on_hover",
+      "label": "Stop animation on hover",
+      "default": false
+    },
+    {
+      "type": "header",
+      "content": "Padding Y settings"
+    },
+    {
+      "type": "number",
+      "id": "pt_mob",
+      "label": "Mobile padding top in px",
+      "default": 0
+    },
+    {
+      "type": "number",
+      "id": "pb_mob",
+      "label": "Mobile padding bottom in px",
+      "default": 0
+    },
+    {
+      "type": "number",
+      "id": "pt_tab",
+      "label": "Tablet padding top in px",
+      "default": 0
+    },
+    {
+      "type": "number",
+      "id": "pb_tab",
+      "label": "Tablet padding bottom in px",
+      "default": 0
+    },
+    {
+      "type": "number",
+      "id": "pt_desk",
+      "label": "Desktop padding top in px",
+      "default": 0
+    },
+    {
+      "type": "number",
+      "id": "pb_desk",
+      "label": "Desktop padding bottom in px",
+      "default": 0
+    }
+  ],
+  "blocks": [
+    {
+      "type": "item",
+      "name": "Item",
+      "settings": [
+        {
+          "type": "text",
+          "id": "text",
+          "label": "Block text",
+          "default": "Slider Text"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Marquee text",
+      "category": "Repeatable",
+      "blocks": [
+        {
+          "type": "item",
+          "settings": {
+            "text": "Slider Text"
+          }
+        },
+        {
+          "type": "item",
+          "settings": {
+            "text": "Slider Text"
+          }
+        },
+        {
+          "type": "item",
+          "settings": {
+            "text": "Slider Text"
+          }
+        },
+        {
+          "type": "item",
+          "settings": {
+            "text": "Slider Text"
+          }
+        },
+        {
+          "type": "item",
+          "settings": {
+            "text": "Slider Text"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}
