@@ -1,0 +1,70 @@
+{% comment %}
+  PARAMS:
+    id: STRING
+    subs_most_popular_frequency: STRING
+{% endcomment %}
+
+<template x-if="$store.drawer.id === '{{ id }}'">
+  <template x-teleport="#drawer-overlay">
+    <div class="bg-sc-bg-primary flex h-full w-full flex-col p-6" data-selling-plan-container>
+      <h3 class="text-sc-title font-primary mb-5 flex items-center justify-between text-3xl">
+        <span>Recurring Refill</span>
+        <button type="button" @click="$store.drawer.hide()">
+          {% render 'icon', name: 'close', size: 'lg' %}
+        </button>
+      </h3>
+      <div class="flex-1">
+        <span class="text-sc-title mb-3 block text-sm">Delivery every:</span>
+        <div class="space-y-3">
+          <template x-for="(selling_plan, index) in product.selling_plan_groups[0].selling_plans">
+            <button
+              type="button"
+              data-selling-plan-option
+              class="bg-sc-subtitle/5 flex w-full items-center justify-between px-5 py-2"
+              @click="
+                changeActiveSellingPlan({
+                  sellPlan: selling_plan
+                })
+              "
+              :class="
+                {
+                '!bg-sc-subtitle/30': sellPlan.id === selling_plan.id
+                }
+              "
+            >
+              <span class="text-sc-title text-base" x-text="selling_plan.options[0].value"></span>
+              <span
+                class="text-sc-subtitle text-xs font-medium"
+                x-show="selling_plan.name.includes('{{ subs_most_popular_frequency }}')"
+              >
+                Most Popular
+              </span>
+            </button>
+          </template>
+        </div>
+      </div>
+
+      <div class="mt-auto w-full">
+        <span class="mb-6 block">
+          <s
+            class="text-sc-body-primary mr-1 inline-block text-sm"
+            x-text="window.currency(selectedVariant.price * qty)"
+          ></s>
+          <span
+            class="text-sc-title inline-block text-lg"
+            x-text="window.currency(selectedVariant.price * (1 - (sellPlan.price_adjustments[0].value / 100)) * qty)"
+          ></span>
+        </span>
+        <button
+          type="button"
+          :aria-busy="loading"
+          class="{% render 'btn-class', btn: 'btn_primary_pill_fill' %} w-full"
+          @click="addToCart"
+        >
+          <span>Subscribe</span>
+          {% render 'btn-loader' %}
+        </button>
+      </div>
+    </div>
+  </template>
+</template>
