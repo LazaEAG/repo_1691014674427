@@ -1,0 +1,279 @@
+{% liquid
+  assign section_anchor_id = section.settings.section_anchor_id | handleize
+  assign color_scheme = section.settings.color_scheme
+
+  assign title = section.settings.title
+  assign subtitle = section.settings.subtitle
+
+  assign button_url = section.settings.button_url
+  assign button_text = section.settings.button_text
+  assign button_type = section.settings.button_type
+
+  assign blocks = section.blocks
+
+  assign pt_mob = section.settings.pt_mob
+  assign pb_mob = section.settings.pb_mob
+  assign pt_tab = section.settings.pt_tab
+  assign pb_tab = section.settings.pb_tab
+  assign pt_desk = section.settings.pt_desk
+  assign pb_desk = section.settings.pb_desk
+%}
+
+{% render 'section-paddings',
+  section_id: section.id,
+  pt_mob: pt_mob,
+  pb_mob: pb_mob,
+  pt_tab: pt_tab,
+  pb_tab: pb_tab,
+  pt_desk: pt_desk,
+  pb_desk: pb_desk
+%}
+
+<div
+  id="{{ section_anchor_id }}"
+  data-section-id="{{ section.id }}"
+  class="color-scheme-{{ color_scheme }} bg-sc-bg-primary bg-primary-gradient"
+>
+  <div
+    class="animate__animated smD:flex smD:space-x-15 4k:max-w-[1840px] 4k:space-x-30 container opacity-0"
+    x-intersect="$el.classList.add('animate__fadeIn')"
+  >
+    {% if title != blank or subtitle != blank or button_text != blank %}
+      <div class="smD:block smD:m-0 smD:max-w-[400px] hidden md:mb-5 2xl:max-w-[500px]">
+        {% if title != blank %}
+          <h2 class="text-sc-title font-primary 2k:text-6xl 2k:mb-2 mb-4 text-4xl font-medium md:text-5xl 2xl:text-6xl">
+            {{- title -}}
+          </h2>
+        {% endif %}
+
+        {% if subtitle != blank %}
+          <div class="rte text-sc-body-primary mb-4 text-base md:text-lg">{{- subtitle -}}</div>
+        {% endif %}
+
+        {% if button_text != blank %}
+          <a
+            href="{{ button_url }}"
+            class="{% render 'btn-class', btn: button_type %} 2k:mt-5 block w-max max-w-full"
+            aria-label="{{ button_text }}"
+          >
+            <span>
+              {{- button_text -}}
+            </span>
+          </a>
+        {% endif %}
+      </div>
+    {% endif %}
+    <div class="smD:space-y-0 w-full space-y-5">
+      {% if title != blank or subtitle != blank or button_text != blank %}
+        <div class="smD:hidden space-y-4">
+          {% if title != blank %}
+            <h2 class="text-sc-title font-primary 2k:text-6xl text-4xl font-medium md:text-5xl">
+              {{- title -}}
+            </h2>
+          {% endif %}
+
+          {% if subtitle != blank %}
+            <div class="rte text-sc-body-primary text-base md:text-lg">{{- subtitle -}}</div>
+          {% endif %}
+
+          {% if button_text != blank %}
+            <a
+              href="{{ button_url }}"
+              class="{% render 'btn-class', btn: button_type %}"
+              aria-label="{{ button_text }}"
+            >
+              <span>
+                {{- button_text -}}
+              </span>
+            </a>
+          {% endif %}
+        </div>
+      {% endif %}
+
+      {% if blocks.size > 0 %}
+        <div class="space-y-5">
+          {% for block in blocks %}
+            {% assign question = block.settings.question %}
+            {% assign answer = block.settings.answer %}
+
+            {% render 'faq-block', question: question, answer: answer, index: forloop.index %}
+          {% endfor %}
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "FAQ with info",
+  "tag": "section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "section_anchor_id",
+      "label": "Section anchor id",
+      "default": "FAQ with info"
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "Color scheme"
+    },
+    {
+      "type": "header",
+      "content": "Content settings"
+    },
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Section title",
+      "default": "Frequently asked questions"
+    },
+    {
+      "type": "richtext",
+      "id": "subtitle",
+      "label": "Section subtitle",
+      "default": "<p>If you can't find the answer you're looking for, please feel free to chat with our friendly team.</p>"
+    },
+    {
+      "type": "url",
+      "id": "button_url",
+      "label": "Section button url"
+    },
+    {
+      "type": "text",
+      "id": "button_text",
+      "label": "Section button text",
+      "default": "Button text"
+    },
+    {
+      "type": "select",
+      "id": "button_type",
+      "label": "Section button type",
+      "options": [
+        {
+          "value": "btn_primary_main_fill",
+          "label": "main primary fill"
+        },
+        {
+          "value": "btn_secondary_main_fill",
+          "label": "main secondary fill"
+        },
+        {
+          "value": "btn_primary_main_outline",
+          "label": "main primary outline"
+        },
+        {
+          "value": "btn_secondary_main_outline",
+          "label": "main secondary outline"
+        },
+        {
+          "value": "btn_primary_pill_fill",
+          "label": "pill primary fill"
+        },
+        {
+          "value": "btn_secondary_pill_fill",
+          "label": "pill secondary fill"
+        },
+        {
+          "value": "btn_primary_pill_outline",
+          "label": "pill primary outline"
+        },
+        {
+          "value": "btn_secondary_pill_outline",
+          "label": "pill secondary outline"
+        },
+        {
+          "value": "link_primary",
+          "label": "Link primary"
+        },
+        {
+          "value": "link_secondary",
+          "label": "Link secondary"
+        }
+      ],
+      "default": "link_primary"
+    },
+    {
+      "type": "header",
+      "content": "Padding Y settings"
+    },
+    {
+      "type": "number",
+      "id": "pt_mob",
+      "label": "Mobile padding top in px",
+      "default": 0
+    },
+    {
+      "type": "number",
+      "id": "pb_mob",
+      "label": "Mobile padding bottom in px",
+      "default": 0
+    },
+    {
+      "type": "number",
+      "id": "pt_tab",
+      "label": "Tablet padding top in px",
+      "default": 0
+    },
+    {
+      "type": "number",
+      "id": "pb_tab",
+      "label": "Tablet padding bottom in px",
+      "default": 0
+    },
+    {
+      "type": "number",
+      "id": "pt_desk",
+      "label": "Desktop padding top in px",
+      "default": 0
+    },
+    {
+      "type": "number",
+      "id": "pb_desk",
+      "label": "Desktop padding bottom in px",
+      "default": 0
+    }
+  ],
+  "blocks": [
+    {
+      "type": "faq",
+      "name": "FAQ block",
+      "settings": [
+        {
+          "type": "text",
+          "id": "question",
+          "label": "Block question"
+        },
+        {
+          "type": "richtext",
+          "id": "answer",
+          "label": "Block answer"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "FAQ with info",
+      "category": "Repeatable",
+      "blocks": [
+        {
+          "type": "faq",
+          "settings": {
+            "question": "How do I create an account?",
+            "answer": "<p>To create an account, simply click on the 'Sign Up' button on our website's homepage. Follow the prompts to provide the required information, such as your name, email address, and password.</p>"
+          }
+        },
+        {
+          "type": "faq",
+          "settings": {
+            "question": "What is your return/exchange policy?"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}
