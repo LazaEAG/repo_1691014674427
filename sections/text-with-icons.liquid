@@ -1,0 +1,192 @@
+{% liquid
+  assign section_anchor_id = section.settings.section_anchor_id | handleize
+  assign color_scheme = section.settings.color_scheme
+
+  assign icon_width = section.settings.icon_width
+  assign blocks = section.blocks
+
+  assign pt_mob = section.settings.pt_mob
+  assign pb_mob = section.settings.pb_mob
+  assign pt_tab = section.settings.pt_tab
+  assign pb_tab = section.settings.pb_tab
+  assign pt_desk = section.settings.pt_desk
+  assign pb_desk = section.settings.pb_desk
+%}
+
+{% render 'section-paddings',
+  section_id: section.id,
+  pt_mob: pt_mob,
+  pb_mob: pb_mob,
+  pt_tab: pt_tab,
+  pb_tab: pb_tab,
+  pt_desk: pt_desk,
+  pb_desk: pb_desk
+%}
+
+<div
+  id="{{ section_anchor_id }}"
+  data-section-id="{{ section.id }}"
+  class="color-scheme-{{ color_scheme }} bg-sc-bg-primary bg-primary-gradient overflow-hidden"
+>
+  <div class="container overflow-visible">
+    {% if blocks.size > 0 %}
+      <div
+        class="swiper overflow-visible"
+        x-ignore
+        ax-load
+        x-data="swiperSlider($el, 'text_with_icons')"
+      >
+        <div class="swiper-wrapper items-baseline">
+          {% for block in blocks %}
+            {% assign icon = block.settings.icon %}
+            {% assign title = block.settings.title %}
+            {% assign content = block.settings.content %}
+
+            <div class="swiper-slide smD:max-w-[310px] 2k:max-w-full h-auto space-y-2">
+              {% if icon %}
+                {{
+                  icon
+                  | image_url: width: icon_width
+                  | image_tag: loading: 'lazy', alt: icon.alt, class: 'object-contain mb-5 mx-auto'
+                }}
+              {% endif %}
+              {% if title %}
+                <h4 class="font-primary text-sc-title text-center text-xl">{{ title }}</h4>
+              {% endif %}
+              {% if content %}
+                <div class="rte text-sc-body-primary text-center text-base">{{ content }}</div>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </div>
+        <div class="swiper-pagination smD:hidden mt-4.5"></div>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Text with icons",
+  "tag": "section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "section_anchor_id",
+      "label": "Section anchor id",
+      "default": "Text with icons"
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "Color scheme"
+    },
+    {
+      "type": "number",
+      "id": "icon_width",
+      "label": "Icon width/height (in px)",
+      "default": 24
+    },
+    {
+      "type": "header",
+      "content": "Padding Y settings"
+    },
+    {
+      "type": "number",
+      "id": "pt_mob",
+      "label": "Mobile padding top in px",
+      "default": 40
+    },
+    {
+      "type": "number",
+      "id": "pb_mob",
+      "label": "Mobile padding bottom in px",
+      "default": 40
+    },
+    {
+      "type": "number",
+      "id": "pt_tab",
+      "label": "Tablet padding top in px",
+      "default": 40
+    },
+    {
+      "type": "number",
+      "id": "pb_tab",
+      "label": "Tablet padding bottom in px",
+      "default": 40
+    },
+    {
+      "type": "number",
+      "id": "pt_desk",
+      "label": "Desktop padding top in px",
+      "default": 40
+    },
+    {
+      "type": "number",
+      "id": "pb_desk",
+      "label": "Desktop padding bottom in px",
+      "default": 40
+    }
+  ],
+  "max_blocks": 4,
+  "blocks": [
+    {
+      "type": "item",
+      "name": "Text with icon",
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "icon",
+          "label": "Block icon"
+        },
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Block title"
+        },
+        {
+          "type": "richtext",
+          "id": "content",
+          "label": "Block text"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Text with icons",
+      "category": "Repeatable",
+      "blocks": [
+        {
+          "type": "item",
+          "settings": {
+            "title": "Free shipping",
+            "content": "<p>Tell your customers about your shipping offer.</p>"
+          }
+        },
+        {
+          "type": "item",
+          "settings": {
+            "title": "Customer service",
+            "content": "<p>Tell your customers how they can reach you.</p>"
+          }
+        },
+        {
+          "type": "item",
+          "settings": {
+            "title": "Secure payment",
+            "content": "<p>Tell your customers how they can reach you.</p>"
+          }
+        },
+        {
+          "type": "item",
+          "settings": {
+            "title": "Refer a friend",
+            "content": "<p>Tell your customers about your promotional offers.</p>"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}
