@@ -1,0 +1,187 @@
+{% liquid
+  assign section_anchor_id = section.settings.section_anchor_id | handleize
+  assign color_scheme = section.settings.color_scheme
+
+  assign layout = section.settings.layout
+  assign show_image = section.settings.show_image
+  assign title = section.settings.title
+  assign subtitle = section.settings.subtitle
+
+  assign pt_mob = section.settings.pt_mob
+  assign pb_mob = section.settings.pb_mob
+  assign pt_tab = section.settings.pt_tab
+  assign pb_tab = section.settings.pb_tab
+  assign pt_desk = section.settings.pt_desk
+  assign pb_desk = section.settings.pb_desk
+%}
+
+{% render 'section-paddings',
+  section_id: section.id,
+  pt_mob: pt_mob,
+  pb_mob: pb_mob,
+  pt_tab: pt_tab,
+  pb_tab: pb_tab,
+  pt_desk: pt_desk,
+  pb_desk: pb_desk
+%}
+
+<script id="collectionFilters" type="application/json">
+  {
+      {%- for filter in collection.filters -%}
+      "{{- filter.label | handleize -}}": { "isOpen": false },
+      {%- endfor -%}
+       "sort-by":  { "isOpen": false },
+       "sort-by-desktop":  { "isOpen": false }
+  }
+</script>
+
+<div
+  id="{{ section_anchor_id }}"
+  data-section-id="{{ section.id }}"
+  data-collection-banner
+  class="color-scheme-{{ color_scheme }} bg-sc-bg-primary bg-primary-gradient {% if layout contains 'container' %}flex min-h-[320px] items-stretch md:min-h-[400px]{% endif %}"
+>
+  <div
+    class="opacity-0 animate__animated relative flex h-full w-full overflow-hidden {% if show_image -%}min-h-[320px] md:min-h-[400px]{%- endif %} {% if layout contains 'container' %}smD:container smD:h-auto smD:min-h-0 {% endif %}"
+    x-init="$el.classList.add('animate__fadeIn')"
+  >
+    {% assign img_class = 'absolute left-0 top-0 h-full w-full object-cover object-center' %}
+    {% if collection.image != blank and show_image %}
+      {% if layout contains 'container' %}
+        {% assign img_class = img_class | append: ' smD:container' %}
+      {% endif %}
+      {{
+        collection.image
+        | image_url: width: 2000
+        | image_tag: alt: collection.image.alt, class: img_class, widths: '300, 400, 500, 600, 800, 1000'
+      }}
+    {% endif %}
+
+    <div class="px-7.5 relative flex w-full items-stretch justify-center md:py-12.5 py-25 {% if layout contains '_bg' or layout contains 'container' %} 2k:max-w-[1060px] mx-auto max-w-[940px] {% endif %}">
+      <div
+        class="content-block w-full justify-center flex flex-col {% if layout contains '_bg' %} px-10 py-12.5 bg-sc-bg-secondary bg-secondary-gradient backdrop-blur-sm{% elsif layout contains 'container' %}md:px-10 md:py-12.5{% else %}max-w-lg 2xl:max-w-5xl {% endif %} text-center"
+      >
+        <div class="{% if layout contains '_bg' %}space-y-3{% elsif layout contains 'container' %}md:space-y-3 space-y-1 2k:py-14{% else %} 2k:py-14 space-y-1 {% endif %} 2k:space-y-5">
+          <h2 class="font-primary text-sc-title smD:text-6xl xs:text-4xl text-3xl font-medium md:text-5xl">
+            {{- title | default: collection.title -}}
+          </h2>
+          {% if subtitle != blank or collection.description != blank %}
+            <div class="rte 2k:text-2xl text-sc-body-primary text-lg">
+              {{- subtitle | default: collection.description -}}
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Collection banner",
+  "tag": "section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "section_anchor_id",
+      "label": "Section anchor id",
+      "default": "Collection banner"
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "Color scheme"
+    },
+    {
+      "type": "header",
+      "content": "Section settings"
+    },
+    {
+      "type": "select",
+      "id": "layout",
+      "label": "Layout type",
+      "options": [
+        {
+          "value": "full",
+          "label": "Full width"
+        },
+        {
+          "value": "full_bg",
+          "label": "Full width with background"
+        },
+        {
+          "value": "container",
+          "label": "Container"
+        },
+        {
+          "value": "container_bg",
+          "label": "Container with background"
+        }
+      ],
+      "default": "full_bg"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_image",
+      "label": "Show collection image",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Custom collection title (optional)"
+    },
+    {
+      "type": "richtext",
+      "id": "subtitle",
+      "label": "Custom collection subtitle (optional)"
+    },
+    {
+      "type": "header",
+      "content": "Padding Y settings"
+    },
+    {
+      "type": "number",
+      "id": "pt_mob",
+      "label": "Mobile padding top in px",
+      "default": 0
+    },
+    {
+      "type": "number",
+      "id": "pb_mob",
+      "label": "Mobile padding bottom in px",
+      "default": 0
+    },
+    {
+      "type": "number",
+      "id": "pt_tab",
+      "label": "Tablet padding top in px",
+      "default": 0
+    },
+    {
+      "type": "number",
+      "id": "pb_tab",
+      "label": "Tablet padding bottom in px",
+      "default": 0
+    },
+    {
+      "type": "number",
+      "id": "pt_desk",
+      "label": "Desktop padding top in px",
+      "default": 0
+    },
+    {
+      "type": "number",
+      "id": "pb_desk",
+      "label": "Desktop padding bottom in px",
+      "default": 0
+    }
+  ],
+  "presets": [
+    {
+      "name": "Collection banner",
+      "category": "Repeatable"
+    }
+  ]
+}
+{% endschema %}
